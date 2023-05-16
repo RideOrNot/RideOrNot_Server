@@ -1,0 +1,2 @@
+public-api-key:
+  real-time-key: ${REAL_TIME_KEY}
