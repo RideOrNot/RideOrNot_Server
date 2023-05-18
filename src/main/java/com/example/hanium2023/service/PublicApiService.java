@@ -1,5 +1,10 @@
 package com.example.hanium2023.service;
 
+import com.example.hanium2023.domain.dto.ArrivalInfoApiResult;
+import com.example.hanium2023.util.JsonUtil;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -14,24 +19,25 @@ import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class PublicApiService {
     @Value("${public-api-key.real-time-key}")
     private String realTimeApiKey;
+    private final JsonUtil jsonUtil;
 
-    public JSONArray getRealTimeInfos(String stationName){
-        String apiResult = getApiResult(buildRealTimeApiUrl(stationName));
-        JSONParser jsonParser = new JSONParser();
-        JSONObject jsonObject = null;
-        try {
-            jsonObject = (JSONObject) jsonParser.parse(apiResult.toString());
-        } catch (ParseException e) {
-            throw new RuntimeException(e);
-        }
-        return (JSONArray) jsonObject.get("realtimeArrivalList");
+    public List<ArrivalInfoApiResult> getRealTimeInfos(String stationName) {
+        JSONObject apiResultJsonObject = getApiResult(buildRealTimeApiUrl(stationName));
+        JSONArray jsonArray = (JSONArray) apiResultJsonObject.get("realtimeArrivalList");
+
+        return jsonUtil.convertJsonArrayToDtoList(jsonArray, ArrivalInfoApiResult.class);
     }
-    private String getApiResult(String apiUrl){
+
+    private JSONObject getApiResult(String apiUrl) {
         StringBuilder result = new StringBuilder();
         HttpURLConnection urlConnection = null;
         try {
@@ -47,10 +53,11 @@ public class PublicApiService {
             throw new RuntimeException(e);
         }
         urlConnection.disconnect();
-        return result.toString();
+
+        return jsonUtil.parseJsonObject(result.toString());
     }
 
-    private String buildRealTimeApiUrl(String stationName){
+    private String buildRealTimeApiUrl(String stationName) {
         StringBuilder urlBuilder = new StringBuilder("http://swopenAPI.seoul.go.kr/api/subway/");
         try {
             urlBuilder.append(URLEncoder.encode(realTimeApiKey, "UTF-8"));
@@ -61,5 +68,6 @@ public class PublicApiService {
             throw new RuntimeException(e);
         }
     }
+
 
 }
