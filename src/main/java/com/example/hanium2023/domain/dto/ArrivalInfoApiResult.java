@@ -11,31 +11,20 @@ import lombok.NoArgsConstructor;
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ArrivalInfoApiResult {
-//    byte red;
-//
-//    @JsonProperty("r")
-//    public byte getR() {
-//        return red;
-//    }
-//
-//    @JsonProperty("red")
-//    public void setRed(byte red) {
-//        this.red = red;
-//    }
-//    @JsonProperty("b")
     @JsonProperty("barvlDt")
-    int arrivalTime;
+    private long arrivalTime;
 
     @JsonProperty("updnLine")
-    String direction;
+    private String direction;
 
     @JsonProperty("subwayId")
-    String lineName;
+    private String lineName;
 
     @JsonProperty("trainLineNm")
-    String destination;
+    private String destination;
 
     @JsonProperty("recptnDt")
-    String createdAt;
+    private String createdAt;
+
 
 }
