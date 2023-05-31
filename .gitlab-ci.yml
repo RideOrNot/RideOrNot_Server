@@ -4,6 +4,7 @@ stages:
 package:
   image: docker:latest
   stage: dockerbuild-push
+  tags: hanium-runner
   services:
     - docker:dind
   before_script:
