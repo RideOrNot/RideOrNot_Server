@@ -9,7 +9,7 @@ package:
     - docker:dind
   before_script:
     - docker -v
-    - docker login lab.hanium.or.kr:5050 -u $DEPLOY_USER -p $DEPLOY_PASSWORD
+    - docker login lab.hanium.or.kr:5050 -u $GITLAB_USER -p $GITLAB_PASSWORD
   script:
-    - docker build -t lab.hanium.or.kr:5050/$GITLAB_USER/$PROJECT_NAME .
-    - docker push lab.hanium.or.kr:5050/$GITLAB_USER/$PROJECT_NAME
+    - docker build -t lab.hanium.or.kr/$GITLAB_USER/$PROJECT_NAME .
+    - docker push lab.hanium.or.kr/$GITLAB_USER/$PROJECT_NAME
