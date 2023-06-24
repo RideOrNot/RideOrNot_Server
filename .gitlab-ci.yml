@@ -12,4 +12,4 @@ package:
     - docker login lab.hanium.or.kr -u $GITLAB_USER -p $ACCESS_TOKEN
   script:
     - docker build -t lab.hanium.or.kr/$GITLAB_USER/$PROJECT_NAME .
-    - docker push lab.hanium.or.kr/$GITLAB_USER/$PROJECT_NAME
+    - docker push lab.hanium.or.kr:5050/$GITLAB_USER/$PROJECT_NAME
