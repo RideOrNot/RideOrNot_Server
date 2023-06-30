@@ -1,5 +1,6 @@
 public-api-key:
   real-time-key: ${REAL_TIME_KEY}
+  lat-lon-key: ${LAT_LON_KEY}
 
 server:
   port: 8080
