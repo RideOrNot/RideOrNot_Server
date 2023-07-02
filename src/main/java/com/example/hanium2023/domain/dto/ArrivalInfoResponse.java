@@ -1,12 +1,12 @@
 package com.example.hanium2023.domain.dto;
 
 
-import lombok.Builder;
 import lombok.Data;
 
 @Data
 public class ArrivalInfoResponse {
     long arrivalTime;
+    long movingTime;
     String direction;
     String lineName;
     String destination;
