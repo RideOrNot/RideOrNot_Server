@@ -22,7 +22,16 @@ public class User {
     private String nickname;
     private double walkingSpeed;
     private double runningSpeed;
+    private double InitialWalkingSpeed;
+    private double InitialRunningSpeed;
     private int ageRange;
     private int gender;
     private String password;
+    public void updateWalkingSpeed(double walkingSpeed){
+        this.walkingSpeed = walkingSpeed;
+    }
+
+    public void updateRunningSpeed(double runningSpeed){
+        this.runningSpeed = runningSpeed;
+    }
 }
