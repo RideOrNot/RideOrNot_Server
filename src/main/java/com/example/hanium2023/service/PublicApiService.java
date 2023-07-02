@@ -2,6 +2,7 @@ package com.example.hanium2023.service;
 
 import com.example.hanium2023.domain.dto.ArrivalInfoApiResult;
 import com.example.hanium2023.domain.dto.ArrivalInfoResponse;
+import com.example.hanium2023.domain.dto.user.UserDto;
 import com.example.hanium2023.domain.entity.StationExitTmp;
 import com.example.hanium2023.domain.entity.User;
 import com.example.hanium2023.enums.MovingMessageEnum;
@@ -45,7 +46,9 @@ public class PublicApiService {
     public List<ArrivalInfoResponse> getRealTimeInfos(String stationName) {
         JSONObject apiResultJsonObject = getApiResult(buildRealTimeApiUrl(stationName));
         JSONArray jsonArray = (JSONArray) apiResultJsonObject.get("realtimeArrivalList");
-        User user = userRepository.findById(1L).get();
+
+        UserDto userDto = new UserDto(userRepository.findById(1L).get());
+
         List<ArrivalInfoApiResult> arrivalInfoApiResultList = jsonUtil.convertJsonArrayToDtoList(jsonArray, ArrivalInfoApiResult.class)
                 .stream()
                 .filter(this::removeTooFarArrivalInfo)
@@ -55,24 +58,21 @@ public class PublicApiService {
         return arrivalInfoApiResultList
                 .stream()
                 .map(ArrivalInfoResponse::new)
-                .map(apiResult -> calculateMovingTime(apiResult, user))
+                .map(apiResult -> calculateMovingTime(apiResult, userDto))
                 .collect(Collectors.toList());
     }
 
-    private ArrivalInfoResponse calculateMovingTime(ArrivalInfoResponse arrivalInfoResponse, User user) {
+    private ArrivalInfoResponse calculateMovingTime(ArrivalInfoResponse arrivalInfoResponse, UserDto userDto) {
 
         // TODO 출구 별 각 호선 플랫폼 까지의 거리 구하는 코드 적용, 지금은 300M로 함
         double distance = 300;
-        double userWalkingSpeed = user.getWalkingSpeed();
-        double userRunningSpeed = user.getRunningSpeed();
+        double userWalkingSpeed = userDto.getWalkingSpeed();
+        double userRunningSpeed = userDto.getRunningSpeed();
 
         // 최대 이동 속도를 구함 ( m/s 단위)
         // 최소 movingSpeed보다 빠르게 이동해야 탈 수 있음
         double minMovingSpeed = distance / (double) arrivalInfoResponse.getArrivalTime();
         Pair<MovingMessageEnum, Double> movingSpeedInfo = getMovingSpeedInfo(userWalkingSpeed, userRunningSpeed, minMovingSpeed);
-
-        // km/h 단위로 환산
-//        movingSpeed = (movingSpeed / 1000) * 3600;
 
         long movingTime = (long) (distance / movingSpeedInfo.getSecond());
         arrivalInfoResponse.setMovingTime(movingTime > 0 ? movingTime : 0);
