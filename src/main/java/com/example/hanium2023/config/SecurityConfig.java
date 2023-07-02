@@ -43,6 +43,7 @@ public class SecurityConfig {
     //위 방식 문제점 있음 -> 이제 WebSecurityConfigurerAdapter 지원안함
     @Bean
     protected SecurityFilterChain configure(HttpSecurity http) throws Exception {
+        http.csrf().disable();
         http.authorizeRequests()
                 .antMatchers("/admin/**").hasRole("ADMIN")
                 .antMatchers("/user/**").hasRole("USER")
