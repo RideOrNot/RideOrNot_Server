@@ -4,6 +4,7 @@ import com.example.hanium2023.domain.dto.ArrivalInfoApiResult;
 import com.example.hanium2023.domain.dto.ArrivalInfoResponse;
 import com.example.hanium2023.domain.entity.StationExitTmp;
 import com.example.hanium2023.domain.entity.User;
+import com.example.hanium2023.enums.MovingMessageEnum;
 import com.example.hanium2023.repository.StationExitTmpRepository;
 import com.example.hanium2023.repository.UserRepository;
 import com.example.hanium2023.util.CsvParsing;
@@ -13,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
@@ -58,21 +60,47 @@ public class PublicApiService {
     }
 
     private ArrivalInfoResponse calculateMovingTime(ArrivalInfoResponse arrivalInfoResponse, User user) {
+
+        // TODO 출구 별 각 호선 플랫폼 까지의 거리 구하는 코드 적용, 지금은 300M로 함
+        double distance = 300;
+        double userWalkingSpeed = user.getWalkingSpeed();
+        double userRunningSpeed = user.getRunningSpeed();
+
         // 최대 이동 속도를 구함 ( m/s 단위)
         // 최소 movingSpeed보다 빠르게 이동해야 탈 수 있음
-        double movingSpeed = 300 / (double) arrivalInfoResponse.getArrivalTime();
+        double minMovingSpeed = distance / (double) arrivalInfoResponse.getArrivalTime();
+        Pair<MovingMessageEnum, Double> movingSpeedInfo = getMovingSpeedInfo(userWalkingSpeed, userRunningSpeed, minMovingSpeed);
 
         // km/h 단위로 환산
 //        movingSpeed = (movingSpeed / 1000) * 3600;
 
-        // 가중치를 곱함
-        // 가중치를 줄이면 이동속도 작아짐 -> 이동 시간은 커짐 -> 더 널널하게 안내
-        // 그렇다면 사용자가 탑승하지 못하면 가중치를 줄여야하냐?
-        movingSpeed *= user.getSpeedWeight();
+        long movingTime = (long) (distance / movingSpeedInfo.getSecond());
+        arrivalInfoResponse.setMovingTime(movingTime);
 
-        // TODO : 사용자 이동속도와 movingSpeed를 비교해서 뛰어야 되는지 말아야되는지 ?
-        arrivalInfoResponse.setMovingTime((long) (300 / movingSpeed));
+        if (movingSpeedInfo.getSecond() == -1)
+            arrivalInfoResponse.setMessage(movingSpeedInfo.getFirst().getMessage());
+        else
+            arrivalInfoResponse.setMessage(movingTime + "초 동안 " + movingSpeedInfo.getFirst().getMessage());
+
+        arrivalInfoResponse.setMovingSpeedStep(movingSpeedInfo.getFirst().getMovingSpeedStep());
         return arrivalInfoResponse;
+    }
+
+    private Pair<MovingMessageEnum, Double> getMovingSpeedInfo(double walkingSpeed, double runningSpeed, double minMovingSpeed) {
+        if (minMovingSpeed <= walkingSpeed) {
+            return Pair.of(MovingMessageEnum.WALK_SLOWLY, walkingSpeed);
+        } else if (minMovingSpeed <= walkingSpeed * 1.2) {
+            return Pair.of(MovingMessageEnum.WALK, walkingSpeed * 1.2);
+        } else if (minMovingSpeed <= walkingSpeed * 1.5) {
+            return Pair.of(MovingMessageEnum.WALK_FAST, walkingSpeed * 1.5);
+        } else if (minMovingSpeed <= runningSpeed * 0.5) {
+            return Pair.of(MovingMessageEnum.RUN_SLOWLY, runningSpeed * 0.5);
+        } else if (minMovingSpeed <= runningSpeed) {
+            return Pair.of(MovingMessageEnum.RUN, runningSpeed);
+        } else if (minMovingSpeed <= runningSpeed * 1.2) {
+            return Pair.of(MovingMessageEnum.RUN_FAST, runningSpeed * 1.2);
+        } else
+            return Pair.of(MovingMessageEnum.CANNOT_BOARD, -1.0);
     }
 
     private ArrivalInfoApiResult correctArrivalTime(ArrivalInfoApiResult apiResult) {

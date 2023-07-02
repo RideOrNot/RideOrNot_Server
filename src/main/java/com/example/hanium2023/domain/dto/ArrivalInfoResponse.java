@@ -10,6 +10,8 @@ public class ArrivalInfoResponse {
     String direction;
     String lineName;
     String destination;
+    String message;
+    int movingSpeedStep;
 
     public ArrivalInfoResponse(ArrivalInfoApiResult apiResult) {
         arrivalTime = apiResult.getArrivalTime();

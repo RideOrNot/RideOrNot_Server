@@ -20,10 +20,9 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long userId;
     private String nickname;
-    private double speed;
+    private double walkingSpeed;
+    private double runningSpeed;
     private int ageRange;
     private int gender;
     private String password;
-    private double speedWeight;
-
 }
