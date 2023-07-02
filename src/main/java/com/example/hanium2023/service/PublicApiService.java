@@ -75,7 +75,7 @@ public class PublicApiService {
 //        movingSpeed = (movingSpeed / 1000) * 3600;
 
         long movingTime = (long) (distance / movingSpeedInfo.getSecond());
-        arrivalInfoResponse.setMovingTime(movingTime);
+        arrivalInfoResponse.setMovingTime(movingTime > 0 ? movingTime : 0);
 
         if (movingSpeedInfo.getSecond() == -1)
             arrivalInfoResponse.setMessage(movingSpeedInfo.getFirst().getMessage());
