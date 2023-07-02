@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -18,5 +19,11 @@ public class PublicApiController {
     @GetMapping("/test")
     public List<ArrivalInfoResponse> test(@RequestParam String stationName) {
         return publicApiService.getRealTimeInfos(stationName);
+    }
+
+    @GetMapping("/add")
+    public String add() throws IOException, InterruptedException {
+        publicApiService.addExit();
+        return "add";
     }
 }

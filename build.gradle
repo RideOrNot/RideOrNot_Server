@@ -28,6 +28,13 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
 	implementation group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1.1'
+	// https://mvnrepository.com/artifact/org.locationtech.proj4j/proj4j
+	implementation group: 'org.locationtech.proj4j', name: 'proj4j', version: '1.0.0'
+	implementation 'org.osgeo:proj4j:0.1.0'
+	// https://mvnrepository.com/artifact/com.squareup.okhttp/okhttp
+	implementation group: 'com.squareup.okhttp', name: 'okhttp', version: '2.7.5'
+
+
 
 }
 //
