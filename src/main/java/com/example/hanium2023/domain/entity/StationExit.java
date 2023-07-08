@@ -6,7 +6,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
-import java.io.Serializable;
 import java.math.BigDecimal;
 
 @Entity
@@ -14,18 +13,18 @@ import java.math.BigDecimal;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@IdClass(StationExit.class)
-public class StationExit implements Serializable {
+@IdClass(StationExitPK.class)
+public class StationExit{
     @Id
     private String exitName;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @Id
+    @JoinColumn(name = "statn_id", nullable = false)
+    private Station station;
     @Column(precision =8, scale = 6)
     private BigDecimal exitLatitude;
     @Column(precision =9, scale = 6)
     private BigDecimal exitLongitude;
 
-    @Id
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "statn_id", nullable = false)
-    private Station station;
 
 }

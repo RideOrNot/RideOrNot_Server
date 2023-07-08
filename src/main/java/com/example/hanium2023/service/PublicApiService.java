@@ -3,14 +3,9 @@ package com.example.hanium2023.service;
 import com.example.hanium2023.domain.dto.ArrivalInfoApiResult;
 import com.example.hanium2023.domain.dto.ArrivalInfoResponse;
 import com.example.hanium2023.domain.dto.user.UserDto;
-import com.example.hanium2023.domain.entity.StationExitTmp;
-import com.example.hanium2023.domain.entity.User;
 import com.example.hanium2023.enums.MovingMessageEnum;
-import com.example.hanium2023.repository.StationExitTmpRepository;
 import com.example.hanium2023.repository.UserRepository;
-import com.example.hanium2023.util.CsvParsing;
 import com.example.hanium2023.util.JsonUtil;
-import com.example.hanium2023.util.KatecToLatLong;
 import lombok.RequiredArgsConstructor;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -22,11 +17,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
-import java.math.BigDecimal;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.util.LinkedHashMap;
 import java.util.List;
 
 import java.time.LocalDateTime;
@@ -40,7 +33,6 @@ public class PublicApiService {
     @Value("${public-api-key.real-time-key}")
     private String realTimeApiKey;
     private final JsonUtil jsonUtil;
-    private final StationExitTmpRepository stationExitTmpRepository;
     private final UserRepository userRepository;
 
     public List<ArrivalInfoResponse> getRealTimeInfos(String stationName) {
@@ -161,28 +153,4 @@ public class PublicApiService {
             throw new RuntimeException(e);
         }
     }
-
-    public void addExit() throws IOException, InterruptedException {
-        CsvParsing festivalCSVParsing = new CsvParsing("localLink");
-        String[] line = null;
-
-        int lineCount = 0;
-        while ((line = festivalCSVParsing.nextRead()) != null) {
-            if (lineCount == 0) {
-                lineCount++;
-                continue;
-            }
-            LinkedHashMap<String, String> latLon = KatecToLatLong.getLatLon(line[3], line[2]);
-            System.out.println(line[0]);
-            System.out.println(line[1]);
-            StationExitTmp exit = StationExitTmp.builder()
-                    .exitLatitude(new BigDecimal(latLon.get("lat")))
-                    .exitLongitude(new BigDecimal(latLon.get("lon")))
-                    .stationId(Integer.valueOf(line[0]))
-                    .exitName(line[1])
-                    .build();
-            stationExitTmpRepository.save(exit);
-        }
-    }
-
 }

@@ -8,9 +8,10 @@ server:
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://${DB_ENDPOINT}:3306/hanium2023
+    url: ${DB_ENDPOINT}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
+
 
   jpa:
     hibernate:
