@@ -18,10 +18,4 @@ public class PublicApiController {
     public List<ArrivalInfoResponse> test(@RequestParam String stationName) {
         return publicApiService.getRealTimeInfos(stationName);
     }
-
-    @GetMapping("/add")
-    public String add() throws IOException, InterruptedException {
-        publicApiService.addExit();
-        return "add";
-    }
 }

@@ -21,6 +21,7 @@ public class Line {
     @Id
     private Integer lineId;
     private String lineName;
+    private Integer csvLine;
     @OneToMany(mappedBy = "line", cascade = CascadeType.REMOVE, orphanRemoval = true)
     List<Station> stations  = new ArrayList<>();
 }
