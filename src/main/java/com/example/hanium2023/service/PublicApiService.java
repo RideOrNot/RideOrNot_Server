@@ -3,9 +3,7 @@ package com.example.hanium2023.service;
 import com.example.hanium2023.domain.dto.arrivalinfo.ArrivalInfoApiResult;
 import com.example.hanium2023.domain.dto.arrivalinfo.ArrivalInfoResponse;
 import com.example.hanium2023.domain.dto.user.UserDto;
-import com.example.hanium2023.domain.entity.StationExitTmp;
 import com.example.hanium2023.enums.MovingMessageEnum;
-import com.example.hanium2023.repository.StationExitTmpRepository;
 import com.example.hanium2023.repository.UserRepository;
 import com.example.hanium2023.util.CsvParsing;
 import com.example.hanium2023.util.JsonUtil;
@@ -41,7 +39,6 @@ public class PublicApiService {
     @Value("${public-api-key.real-time-key}")
     private String realTimeApiKey;
     private final JsonUtil jsonUtil;
-    private final StationExitTmpRepository stationExitTmpRepository;
     private final UserRepository userRepository;
     private final StringRedisTemplate stringRedisTemplate;
 
@@ -165,29 +162,6 @@ public class PublicApiService {
             return urlBuilder.toString();
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
-        }
-    }
-
-    public void addExit() throws IOException, InterruptedException {
-        CsvParsing festivalCSVParsing = new CsvParsing("localLink");
-        String[] line = null;
-
-        int lineCount = 0;
-        while ((line = festivalCSVParsing.nextRead()) != null) {
-            if (lineCount == 0) {
-                lineCount++;
-                continue;
-            }
-            LinkedHashMap<String, String> latLon = KatecToLatLong.getLatLon(line[3], line[2]);
-            System.out.println(line[0]);
-            System.out.println(line[1]);
-            StationExitTmp exit = StationExitTmp.builder()
-                    .exitLatitude(new BigDecimal(latLon.get("lat")))
-                    .exitLongitude(new BigDecimal(latLon.get("lon")))
-                    .stationId(Integer.valueOf(line[0]))
-                    .exitName(line[1])
-                    .build();
-            stationExitTmpRepository.save(exit);
         }
     }
 

@@ -1,16 +1,23 @@
-<<<<<<< HEAD
 package com.example.hanium2023.service;
 
+import com.example.hanium2023.domain.entity.Line;
 import com.example.hanium2023.domain.entity.Station;
 import com.example.hanium2023.domain.entity.StationExit;
+import com.example.hanium2023.repository.LineRepository;
 import com.example.hanium2023.repository.StationExitRepository;
 import com.example.hanium2023.repository.StationRepository;
+import com.example.hanium2023.util.CsvParsing;
+import com.example.hanium2023.util.KatecToLatLong;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -19,7 +26,6 @@ public class StationService {
     private final StationExitRepository stationExitRepository;
     private final StationRepository stationRepository;
     private final LineRepository lineRepository;
-    private final StationRepository stationRepository;
 
     public String insertDistances() {
         ValueOperations<String, String> stringStringValueOperations = stringRedisTemplate.opsForValue();
