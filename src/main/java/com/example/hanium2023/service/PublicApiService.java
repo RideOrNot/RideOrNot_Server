@@ -65,10 +65,8 @@ public class PublicApiService {
     private ArrivalInfoResponse calculateMovingTime(ArrivalInfoResponse arrivalInfoResponse, String stationName, String exitName, UserDto userDto) {
         ValueOperations<String, String> stringStringValueOperations = stringRedisTemplate.opsForValue();
         String stationId = stringStringValueOperations.get(stationName + "/" + arrivalInfoResponse.getLineName());
-        System.out.println("arrivalInfoResponse = " + arrivalInfoResponse.getLineName());
-        System.out.println("stationId = " + stationId);
+
         double distance = Double.parseDouble(stringStringValueOperations.get(stationId + "/" + exitName));
-        System.out.println("distance = " + distance);
         double userWalkingSpeed = userDto.getWalkingSpeed();
         double userRunningSpeed = userDto.getRunningSpeed();
 
