@@ -15,4 +15,8 @@ public class StationController {
     public String insertDistances(){
         return stationService.insertDistances();
     }
+    @GetMapping("/insert/stationId")
+    public String insertStationId(){
+        return stationService.insertStationId();
+    }
 }

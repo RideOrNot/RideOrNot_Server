@@ -16,7 +16,7 @@ import java.util.List;
 public class StationService {
     private final StringRedisTemplate stringRedisTemplate;
     private final StationExitRepository stationExitRepository;
-
+    private final StationRepository stationRepository;
 
     public String insertDistances() {
         ValueOperations<String, String> stringStringValueOperations = stringRedisTemplate.opsForValue();
@@ -27,8 +27,18 @@ public class StationService {
                     stationExit.getExitLongitude().doubleValue(),
                     station.getStatnLatitude().doubleValue(),
                     station.getStatnLongitude().doubleValue());
-            stringStringValueOperations.set(station.getStationId().toString() + "/" + station.getStatnName() + "/" + stationExit.getExitName(),
+            stringStringValueOperations.set(station.getStationId().toString() + "/" + stationExit.getExitName(),
                     String.valueOf(distance));
+        }
+        return "success";
+    }
+
+    public String insertStationId() {
+        ValueOperations<String, String> stringStringValueOperations = stringRedisTemplate.opsForValue();
+        List<Station> stationList = stationRepository.findAll();
+        for (Station station : stationList) {
+            stringStringValueOperations.set(station.getStatnName() + "/" + station.getLine().getLineId(),
+                    String.valueOf(station.getStationId()));
         }
         return "success";
     }

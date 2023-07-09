@@ -14,9 +14,12 @@ import lombok.RequiredArgsConstructor;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
+import javax.lang.model.SourceVersion;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -41,8 +44,9 @@ public class PublicApiService {
     private final JsonUtil jsonUtil;
     private final StationExitTmpRepository stationExitTmpRepository;
     private final UserRepository userRepository;
+    private final StringRedisTemplate stringRedisTemplate;
 
-    public List<ArrivalInfoResponse> getRealTimeInfos(String stationName) {
+    public List<ArrivalInfoResponse> getRealTimeInfos(String stationName, String exitName) {
         JSONObject apiResultJsonObject = getApiResult(buildRealTimeApiUrl(stationName));
         JSONArray jsonArray = (JSONArray) apiResultJsonObject.get("realtimeArrivalList");
 
@@ -54,17 +58,21 @@ public class PublicApiService {
                 .map(this::correctArrivalTime)
                 .filter(this::removeExpiredArrivalInfo)
                 .collect(Collectors.toList());
+
         return arrivalInfoApiResultList
                 .stream()
                 .map(ArrivalInfoResponse::new)
-                .map(apiResult -> calculateMovingTime(apiResult, userDto))
+                .map(apiResult -> calculateMovingTime(apiResult, stationName, exitName, userDto))
                 .collect(Collectors.toList());
     }
 
-    private ArrivalInfoResponse calculateMovingTime(ArrivalInfoResponse arrivalInfoResponse, UserDto userDto) {
-
-        // TODO 출구 별 각 호선 플랫폼 까지의 거리 구하는 코드 적용, 지금은 300M로 함
-        double distance = 300;
+    private ArrivalInfoResponse calculateMovingTime(ArrivalInfoResponse arrivalInfoResponse, String stationName, String exitName, UserDto userDto) {
+        ValueOperations<String, String> stringStringValueOperations = stringRedisTemplate.opsForValue();
+        String stationId = stringStringValueOperations.get(stationName + "/" + arrivalInfoResponse.getLineName());
+        System.out.println("arrivalInfoResponse = " + arrivalInfoResponse.getLineName());
+        System.out.println("stationId = " + stationId);
+        double distance = Double.parseDouble(stringStringValueOperations.get(stationId + "/" + exitName));
+        System.out.println("distance = " + distance);
         double userWalkingSpeed = userDto.getWalkingSpeed();
         double userRunningSpeed = userDto.getRunningSpeed();
 

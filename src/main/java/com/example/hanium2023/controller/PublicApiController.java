@@ -15,9 +15,9 @@ import java.util.List;
 public class PublicApiController {
     private final PublicApiService publicApiService;
 
-    @GetMapping("/test")
-    public List<ArrivalInfoResponse> test(@RequestParam String stationName) {
-        return publicApiService.getRealTimeInfos(stationName);
+    @GetMapping("/arrivalInfo")
+    public List<ArrivalInfoResponse> test(@RequestParam String stationName, @RequestParam String exitName) {
+        return publicApiService.getRealTimeInfos(stationName, exitName);
     }
 
     @GetMapping("/add")
