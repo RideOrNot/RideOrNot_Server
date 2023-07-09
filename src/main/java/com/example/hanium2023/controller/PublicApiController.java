@@ -1,7 +1,6 @@
 package com.example.hanium2023.controller;
 
-import com.example.hanium2023.domain.dto.ArrivalInfoApiResult;
-import com.example.hanium2023.domain.dto.ArrivalInfoResponse;
+import com.example.hanium2023.domain.dto.arrivalinfo.ArrivalInfoResponse;
 import com.example.hanium2023.service.PublicApiService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;

@@ -1,10 +1,9 @@
 package com.example.hanium2023.service;
 
-import com.example.hanium2023.domain.dto.ArrivalInfoApiResult;
-import com.example.hanium2023.domain.dto.ArrivalInfoResponse;
+import com.example.hanium2023.domain.dto.arrivalinfo.ArrivalInfoApiResult;
+import com.example.hanium2023.domain.dto.arrivalinfo.ArrivalInfoResponse;
 import com.example.hanium2023.domain.dto.user.UserDto;
 import com.example.hanium2023.domain.entity.StationExitTmp;
-import com.example.hanium2023.domain.entity.User;
 import com.example.hanium2023.enums.MovingMessageEnum;
 import com.example.hanium2023.repository.StationExitTmpRepository;
 import com.example.hanium2023.repository.UserRepository;
