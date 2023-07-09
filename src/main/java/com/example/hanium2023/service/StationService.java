@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 package com.example.hanium2023.service;
 
 import com.example.hanium2023.domain.entity.Station;
@@ -16,6 +17,8 @@ import java.util.List;
 public class StationService {
     private final StringRedisTemplate stringRedisTemplate;
     private final StationExitRepository stationExitRepository;
+    private final StationRepository stationRepository;
+    private final LineRepository lineRepository;
     private final StationRepository stationRepository;
 
     public String insertDistances() {
@@ -62,4 +65,31 @@ public class StationService {
     private static double rad2deg(double rad) {
         return (rad * 180 / Math.PI);
     }
+
+    public void addStation() throws IOException, InterruptedException {
+        CsvParsing festivalCSVParsing = new CsvParsing("file path");
+        String[] line = null;
+
+        int lineCount = 0;
+        while ((line = festivalCSVParsing.nextRead()) != null) {
+            if (lineCount == 0) {
+                lineCount++;
+                continue;
+            }
+            LinkedHashMap<String, String> latLon = KatecToLatLong.getLatLon(line[4], line[3]);
+            System.out.println(line[0]);
+            System.out.println(line[1]);
+            Optional<Line> stationLine = lineRepository.findByCsvLine(Integer.valueOf(line[0])/100);
+            if(!stationLine.isPresent()) continue;
+            Station station = Station.builder()
+                    .statnName(line[1])
+                    .statnLatitude(new BigDecimal(latLon.get("lat")))
+                    .statnLongitude(new BigDecimal(latLon.get("lon")))
+                    .stationId(Integer.valueOf(line[0]))
+                    .line(stationLine.get())
+                    .build();
+            stationRepository.save(station);
+        }
+    }
 }
+

@@ -1,16 +1,10 @@
 package com.example.hanium2023.util;
 
-import com.example.hanium2023.domain.entity.StationExitTmp;
-import com.example.hanium2023.repository.StationExitTmpRepository;
-import lombok.RequiredArgsConstructor;
-
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 
 
