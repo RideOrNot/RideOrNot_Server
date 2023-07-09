@@ -1,15 +1,19 @@
 package com.example.hanium2023.service;
 
-import com.example.hanium2023.domain.dto.ArrivalInfoApiResult;
-import com.example.hanium2023.domain.dto.ArrivalInfoResponse;
+import com.example.hanium2023.domain.dto.arrivalinfo.ArrivalInfoApiResult;
+import com.example.hanium2023.domain.dto.arrivalinfo.ArrivalInfoResponse;
 import com.example.hanium2023.domain.dto.user.UserDto;
 import com.example.hanium2023.enums.MovingMessageEnum;
 import com.example.hanium2023.repository.UserRepository;
+import com.example.hanium2023.util.CsvParsing;
 import com.example.hanium2023.util.JsonUtil;
+import com.example.hanium2023.util.KatecToLatLong;
 import lombok.RequiredArgsConstructor;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
@@ -17,9 +21,11 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 import java.time.LocalDateTime;
@@ -34,8 +40,9 @@ public class PublicApiService {
     private String realTimeApiKey;
     private final JsonUtil jsonUtil;
     private final UserRepository userRepository;
+    private final StringRedisTemplate stringRedisTemplate;
 
-    public List<ArrivalInfoResponse> getRealTimeInfos(String stationName) {
+    public List<ArrivalInfoResponse> getRealTimeInfos(String stationName, String exitName) {
         JSONObject apiResultJsonObject = getApiResult(buildRealTimeApiUrl(stationName));
         JSONArray jsonArray = (JSONArray) apiResultJsonObject.get("realtimeArrivalList");
 
@@ -47,17 +54,19 @@ public class PublicApiService {
                 .map(this::correctArrivalTime)
                 .filter(this::removeExpiredArrivalInfo)
                 .collect(Collectors.toList());
+
         return arrivalInfoApiResultList
                 .stream()
                 .map(ArrivalInfoResponse::new)
-                .map(apiResult -> calculateMovingTime(apiResult, userDto))
+                .map(apiResult -> calculateMovingTime(apiResult, stationName, exitName, userDto))
                 .collect(Collectors.toList());
     }
 
-    private ArrivalInfoResponse calculateMovingTime(ArrivalInfoResponse arrivalInfoResponse, UserDto userDto) {
+    private ArrivalInfoResponse calculateMovingTime(ArrivalInfoResponse arrivalInfoResponse, String stationName, String exitName, UserDto userDto) {
+        ValueOperations<String, String> stringStringValueOperations = stringRedisTemplate.opsForValue();
+        String stationId = stringStringValueOperations.get(stationName + "/" + arrivalInfoResponse.getLineName());
 
-        // TODO 출구 별 각 호선 플랫폼 까지의 거리 구하는 코드 적용, 지금은 300M로 함
-        double distance = 300;
+        double distance = Double.parseDouble(stringStringValueOperations.get(stationId + "/" + exitName));
         double userWalkingSpeed = userDto.getWalkingSpeed();
         double userRunningSpeed = userDto.getRunningSpeed();
 
@@ -153,4 +162,5 @@ public class PublicApiService {
             throw new RuntimeException(e);
         }
     }
+
 }
