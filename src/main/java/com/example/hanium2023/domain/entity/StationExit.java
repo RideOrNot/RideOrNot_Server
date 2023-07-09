@@ -14,8 +14,8 @@ import java.math.BigDecimal;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@IdClass(StationExit.class)
-public class StationExit implements Serializable {
+@IdClass(StationExitID.class)
+public class StationExit {
     @Id
     private String exitName;
     @Column(precision =8, scale = 6)
