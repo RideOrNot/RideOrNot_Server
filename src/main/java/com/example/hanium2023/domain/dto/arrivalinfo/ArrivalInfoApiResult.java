@@ -1,4 +1,4 @@
-package com.example.hanium2023.domain.dto;
+package com.example.hanium2023.domain.dto.arrivalinfo;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;

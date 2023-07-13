@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
+import java.io.Serializable;
 import java.math.BigDecimal;
 
 @Entity
@@ -17,6 +18,7 @@ import java.math.BigDecimal;
 public class StationExit{
     @Id
     private String exitName;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @Id
     @JoinColumn(name = "statn_id", nullable = false)

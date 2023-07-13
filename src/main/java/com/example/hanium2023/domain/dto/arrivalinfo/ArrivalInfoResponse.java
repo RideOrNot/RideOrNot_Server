@@ -1,6 +1,7 @@
-package com.example.hanium2023.domain.dto;
+package com.example.hanium2023.domain.dto.arrivalinfo;
 
 
+import com.example.hanium2023.domain.dto.arrivalinfo.ArrivalInfoApiResult;
 import lombok.Data;
 
 @Data
