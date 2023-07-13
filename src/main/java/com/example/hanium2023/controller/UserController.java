@@ -1,5 +1,6 @@
 package com.example.hanium2023.controller;
 
+import com.example.hanium2023.domain.dto.ressponse.Response;
 import com.example.hanium2023.domain.dto.user.UserFeedbackRequest;
 import com.example.hanium2023.repository.UserRepository;
 import com.example.hanium2023.service.UserService;
@@ -15,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserController {
     private final UserService userService;
     @PostMapping("/feedback")
-    public String doFeedback(@RequestBody UserFeedbackRequest userFeedbackRequest){
-        return userService.doFeedback(userFeedbackRequest);
+    public Response<String> doFeedback(@RequestBody UserFeedbackRequest userFeedbackRequest){
+        return Response.success(userService.doFeedback(userFeedbackRequest));
     }
 }

@@ -1,6 +1,7 @@
 package com.example.hanium2023.controller;
 
 import com.example.hanium2023.domain.dto.arrivalinfo.ArrivalInfoResponse;
+import com.example.hanium2023.domain.dto.ressponse.Response;
 import com.example.hanium2023.service.PublicApiService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,7 +17,7 @@ public class PublicApiController {
     private final PublicApiService publicApiService;
 
     @GetMapping("/arrivalInfo")
-    public List<ArrivalInfoResponse> test(@RequestParam String stationName, @RequestParam String exitName) {
-        return publicApiService.getRealTimeInfos(stationName, exitName);
+    public Response<List<ArrivalInfoResponse>> test(@RequestParam String stationName, @RequestParam String exitName) {
+        return Response.success(publicApiService.getRealTimeInfos(stationName, exitName));
     }
 }
