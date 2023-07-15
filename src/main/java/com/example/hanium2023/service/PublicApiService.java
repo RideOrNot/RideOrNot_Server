@@ -2,12 +2,11 @@ package com.example.hanium2023.service;
 
 import com.example.hanium2023.domain.dto.arrivalinfo.ArrivalInfoApiResult;
 import com.example.hanium2023.domain.dto.arrivalinfo.ArrivalInfoResponse;
+import com.example.hanium2023.domain.dto.arrivalinfo.PushAlarmResponse;
 import com.example.hanium2023.domain.dto.user.UserDto;
 import com.example.hanium2023.enums.MovingMessageEnum;
 import com.example.hanium2023.repository.UserRepository;
-import com.example.hanium2023.util.CsvParsing;
 import com.example.hanium2023.util.JsonUtil;
-import com.example.hanium2023.util.KatecToLatLong;
 import lombok.RequiredArgsConstructor;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -21,11 +20,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
-import java.math.BigDecimal;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.util.LinkedHashMap;
 import java.util.List;
 
 import java.time.LocalDateTime;
@@ -42,7 +39,7 @@ public class PublicApiService {
     private final UserRepository userRepository;
     private final StringRedisTemplate stringRedisTemplate;
 
-    public List<ArrivalInfoResponse> getRealTimeInfos(String stationName, String exitName) {
+    public PushAlarmResponse getRealTimeInfoForPushAlarm(String stationName, String exitName) {
         JSONObject apiResultJsonObject = getApiResult(buildRealTimeApiUrl(stationName));
         JSONArray jsonArray = (JSONArray) apiResultJsonObject.get("realtimeArrivalList");
 
@@ -52,17 +49,14 @@ public class PublicApiService {
                 .stream()
                 .filter(this::removeTooFarArrivalInfo)
                 .map(this::correctArrivalTime)
-                .filter(this::removeExpiredArrivalInfo)
+                .filter(this::removeInvalidArrivalInfo)
                 .collect(Collectors.toList());
 
-        for (ArrivalInfoApiResult arrivalInfoApiResult : arrivalInfoApiResultList) {
-            System.out.println("arrivalInfoApiResult.toString() = " + arrivalInfoApiResult.toString());
-        }
-        return arrivalInfoApiResultList
+        return new PushAlarmResponse(arrivalInfoApiResultList
                 .stream()
                 .map(apiResult -> { return new ArrivalInfoResponse(apiResult, stationName);})
                 .map(apiResult -> calculateMovingTime(apiResult, stationName, exitName, userDto))
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()));
     }
 
     private ArrivalInfoResponse calculateMovingTime(ArrivalInfoResponse arrivalInfoResponse, String stationName, String exitName, UserDto userDto) {
@@ -126,7 +120,7 @@ public class PublicApiService {
             return true;
     }
 
-    private boolean removeExpiredArrivalInfo(ArrivalInfoApiResult arrivalInfo) {
+    private boolean removeInvalidArrivalInfo(ArrivalInfoApiResult arrivalInfo) {
         long arrivalTime = arrivalInfo.getArrivalTime();
         if (arrivalTime < 30 || arrivalTime > 300)
             return false;
