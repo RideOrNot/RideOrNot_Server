@@ -26,5 +26,14 @@ public class ArrivalInfoApiResult {
     @JsonProperty("recptnDt")
     private String createdAt;
 
-
+    @Override
+    public String toString() {
+        return "ArrivalInfoApiResult{" +
+                "arrivalTime=" + arrivalTime +
+                ", direction='" + direction + '\'' +
+                ", lineName='" + lineName + '\'' +
+                ", destination='" + destination + '\'' +
+                ", createdAt='" + createdAt + '\'' +
+                '}';
+    }
 }
