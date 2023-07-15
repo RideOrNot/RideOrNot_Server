@@ -18,7 +18,7 @@ public class ArrivalInfoApiResult {
     private String direction;
 
     @JsonProperty("subwayId")
-    private String lineName;
+    private String lineId;
 
     @JsonProperty("trainLineNm")
     private String destination;
@@ -31,7 +31,7 @@ public class ArrivalInfoApiResult {
         return "ArrivalInfoApiResult{" +
                 "arrivalTime=" + arrivalTime +
                 ", direction='" + direction + '\'' +
-                ", lineName='" + lineName + '\'' +
+                ", lineName='" + lineId + '\'' +
                 ", destination='" + destination + '\'' +
                 ", createdAt='" + createdAt + '\'' +
                 '}';
