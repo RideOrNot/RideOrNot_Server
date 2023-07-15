@@ -8,5 +8,5 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 public class PushAlarmResponse {
-    List<ArrivalInfoResponse> arrivalInfo;
+    List<ArrivalInfoPushAlarmResponse> arrivalInfo;
 }
