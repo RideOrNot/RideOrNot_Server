@@ -55,9 +55,12 @@ public class PublicApiService {
                 .filter(this::removeExpiredArrivalInfo)
                 .collect(Collectors.toList());
 
+        for (ArrivalInfoApiResult arrivalInfoApiResult : arrivalInfoApiResultList) {
+            System.out.println("arrivalInfoApiResult.toString() = " + arrivalInfoApiResult.toString());
+        }
         return arrivalInfoApiResultList
                 .stream()
-                .map(ArrivalInfoResponse::new)
+                .map(apiResult -> { return new ArrivalInfoResponse(apiResult, stationName);})
                 .map(apiResult -> calculateMovingTime(apiResult, stationName, exitName, userDto))
                 .collect(Collectors.toList());
     }
