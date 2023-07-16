@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserFeedbackRequest {
+public class UserAutoFeedbackRequest {
     boolean subwayBoarded;
     int movingSpeedStep;
 }

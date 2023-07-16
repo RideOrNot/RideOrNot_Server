@@ -1,7 +1,7 @@
 package com.example.hanium2023.service;
 
 import com.example.hanium2023.domain.dto.user.UserDto;
-import com.example.hanium2023.domain.dto.user.UserFeedbackRequest;
+import com.example.hanium2023.domain.dto.user.UserAutoFeedbackRequest;
 import com.example.hanium2023.domain.entity.User;
 import com.example.hanium2023.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -64,7 +64,7 @@ public class UserService {
 //        return String.valueOf(newMovingSpeed);
 //    }
     @Transactional
-    public String doFeedback(UserFeedbackRequest userFeedbackRequest) {
+    public String doFeedback(UserAutoFeedbackRequest userAutoFeedbackRequest) {
         User user = userRepository.findById(1L).get();
         UserDto userDto = new UserDto(user);
 
@@ -73,15 +73,15 @@ public class UserService {
 
         double newMovingSpeed;
 
-        if (1 <= userFeedbackRequest.getMovingSpeedStep() && userFeedbackRequest.getMovingSpeedStep() <= 3) {
-            if (userFeedbackRequest.isSubwayBoarded()) {
+        if (1 <= userAutoFeedbackRequest.getMovingSpeedStep() && userAutoFeedbackRequest.getMovingSpeedStep() <= 3) {
+            if (userAutoFeedbackRequest.isSubwayBoarded()) {
                 newMovingSpeed = calculateNewMovingSpeed(userDto.getWalkingSpeed(), userDto.getInitialWalkingSpeed(), alpha, 0.8);
             } else {
                 newMovingSpeed = calculateNewMovingSpeed(userDto.getWalkingSpeed(), userDto.getInitialWalkingSpeed(), beta, 1.2);
             }
             user.updateWalkingSpeed(newMovingSpeed);
         } else {
-            if (userFeedbackRequest.isSubwayBoarded()) {
+            if (userAutoFeedbackRequest.isSubwayBoarded()) {
                 newMovingSpeed = calculateNewMovingSpeed(userDto.getRunningSpeed(), userDto.getInitialRunningSpeed(), alpha, 0.8);
             } else {
                 newMovingSpeed = calculateNewMovingSpeed(userDto.getRunningSpeed(), userDto.getInitialRunningSpeed(), beta, 1.2);
