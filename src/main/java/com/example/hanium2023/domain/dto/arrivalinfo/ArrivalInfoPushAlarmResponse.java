@@ -18,12 +18,12 @@ public class ArrivalInfoPushAlarmResponse {
     String currentTime;
     String stationName;
 
-    public ArrivalInfoPushAlarmResponse(ArrivalInfoApiResult apiResult, String stationName) {
+    public ArrivalInfoPushAlarmResponse(ArrivalInfoApiResult apiResult) {
         this.arrivalTime = apiResult.getArrivalTime();
         this.direction = apiResult.getDirection();
         this.lineId = apiResult.getLineId();
         this.destination = apiResult.getDestination();
         this.currentTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd a HH:mm:ss"));
-        this.stationName = stationName;
+        this.stationName = apiResult.getStationName();
     }
 }
