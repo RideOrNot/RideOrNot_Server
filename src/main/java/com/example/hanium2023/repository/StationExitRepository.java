@@ -10,4 +10,6 @@ import java.util.List;
 @Repository
 public interface StationExitRepository extends JpaRepository<StationExit, StationExitID> {
     List<StationExit> findAll();
+    StationExit findByExitNameAndStation_StationId(String exitName, Integer stationId);
+
 }

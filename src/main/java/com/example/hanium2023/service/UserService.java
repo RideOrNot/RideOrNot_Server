@@ -1,10 +1,17 @@
 package com.example.hanium2023.service;
 
+import com.example.hanium2023.domain.dto.user.UserAutoFeedBackResponse;
 import com.example.hanium2023.domain.dto.user.UserDto;
 import com.example.hanium2023.domain.dto.user.UserAutoFeedbackRequest;
+import com.example.hanium2023.domain.entity.BoardingHistory;
+import com.example.hanium2023.domain.entity.StationExit;
 import com.example.hanium2023.domain.entity.User;
+import com.example.hanium2023.repository.BoardingHistoryRepository;
+import com.example.hanium2023.repository.StationExitRepository;
 import com.example.hanium2023.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,35 +21,46 @@ import java.text.DecimalFormat;
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
+    private final BoardingHistoryRepository boardingHistoryRepository;
+    private final StationExitRepository stationExitRepository;
+    private final StringRedisTemplate stringRedisTemplate;
 
     @Transactional
-    public String doFeedback(UserAutoFeedbackRequest userAutoFeedbackRequest) {
+    public UserAutoFeedBackResponse doAutoFeedback(UserAutoFeedbackRequest userAutoFeedbackRequest) {
         User user = userRepository.findById(1L).get();
         UserDto userDto = new UserDto(user);
-
         double alpha = 0.2;
         double beta = 0.35;
 
         double newMovingSpeed;
 
         if (1 <= userAutoFeedbackRequest.getMovingSpeedStep() && userAutoFeedbackRequest.getMovingSpeedStep() <= 3) {
-            if (userAutoFeedbackRequest.isSubwayBoarded()) {
+            if (userAutoFeedbackRequest.isBoarded()) {
                 newMovingSpeed = calculateNewMovingSpeed(userDto.getWalkingSpeed(), userDto.getInitialWalkingSpeed(), alpha, 0.8);
             } else {
                 newMovingSpeed = calculateNewMovingSpeed(userDto.getWalkingSpeed(), userDto.getInitialWalkingSpeed(), beta, 1.2);
             }
             user.updateWalkingSpeed(newMovingSpeed);
         } else {
-            if (userAutoFeedbackRequest.isSubwayBoarded()) {
+            if (userAutoFeedbackRequest.isBoarded()) {
                 newMovingSpeed = calculateNewMovingSpeed(userDto.getRunningSpeed(), userDto.getInitialRunningSpeed(), alpha, 0.8);
             } else {
                 newMovingSpeed = calculateNewMovingSpeed(userDto.getRunningSpeed(), userDto.getInitialRunningSpeed(), beta, 1.2);
             }
             user.updateRunningSpeed(newMovingSpeed);
         }
-        return String.valueOf(newMovingSpeed);
+
+        Long boardingHistoryId = saveBoardingHistory(userAutoFeedbackRequest, user);
+        return new UserAutoFeedBackResponse(boardingHistoryId);
     }
 
+    private Long saveBoardingHistory(UserAutoFeedbackRequest userAutoFeedbackRequest, User user) {
+        ValueOperations<String, String> stringValueOperations = stringRedisTemplate.opsForValue();
+        Integer stationId = Integer.parseInt(stringValueOperations.get(userAutoFeedbackRequest.getStationName() + "/" + userAutoFeedbackRequest.getLineId()));
+        StationExit stationExit = stationExitRepository.findByExitNameAndStation_StationId(userAutoFeedbackRequest.getExitName(), stationId);
+        BoardingHistory savedBoardingHistory = boardingHistoryRepository.save(userAutoFeedbackRequest.toEntity(stationExit, user));
+        return savedBoardingHistory.getBoardingHistoryId();
+    }
 
     private double calculateNewMovingSpeed(double currentSpeed, double initialSpeed, double weight, double multiplier) {
         double newMovingSpeed = (1 - weight) * currentSpeed + weight * initialSpeed * multiplier;
