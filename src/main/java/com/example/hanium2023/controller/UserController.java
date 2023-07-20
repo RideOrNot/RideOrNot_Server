@@ -1,8 +1,8 @@
 package com.example.hanium2023.controller;
 
 import com.example.hanium2023.domain.dto.ressponse.Response;
-import com.example.hanium2023.domain.dto.user.UserFeedbackRequest;
-import com.example.hanium2023.repository.UserRepository;
+import com.example.hanium2023.domain.dto.user.UserAutoFeedBackResponse;
+import com.example.hanium2023.domain.dto.user.UserAutoFeedbackRequest;
 import com.example.hanium2023.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,8 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/users")
 public class UserController {
     private final UserService userService;
-    @PostMapping("/feedback")
-    public Response<String> doFeedback(@RequestBody UserFeedbackRequest userFeedbackRequest){
-        return Response.success(userService.doFeedback(userFeedbackRequest));
+    @PostMapping("/auto-feedback")
+    public Response<UserAutoFeedBackResponse> doAutoFeedback(@RequestBody UserAutoFeedbackRequest userAutoFeedbackRequest){
+        return Response.success(userService.doAutoFeedback(userAutoFeedbackRequest));
     }
 }

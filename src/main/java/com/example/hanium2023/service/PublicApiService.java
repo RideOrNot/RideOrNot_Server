@@ -75,9 +75,7 @@ public class PublicApiService {
 
         return new PushAlarmResponse(arrivalInfoApiResultList
                 .stream()
-                .map(apiResult -> {
-                    return new ArrivalInfoPushAlarmResponse(apiResult, stationName);
-                })
+                .map(ArrivalInfoPushAlarmResponse::new)
                 .map(apiResult -> calculateMovingTime(apiResult, stationName, exitName, userDto))
                 .collect(Collectors.toList()));
     }
