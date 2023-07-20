@@ -1,5 +1,6 @@
 package com.example.hanium2023.service;
 
+import com.example.hanium2023.domain.dto.station.StationInfoPageResponse;
 import com.example.hanium2023.domain.entity.Line;
 import com.example.hanium2023.domain.entity.Station;
 import com.example.hanium2023.domain.entity.StationExit;
@@ -26,6 +27,11 @@ public class StationService {
     private final StationExitRepository stationExitRepository;
     private final StationRepository stationRepository;
     private final LineRepository lineRepository;
+    private final PublicApiService publicApiService;
+
+    public StationInfoPageResponse getStationInfo(String stationName, String lineId) {
+        return new StationInfoPageResponse(publicApiService.getRealTimeInfoForStationInfoPage(stationName, lineId), 0);
+    }
 
     public String insertDistances() {
         ValueOperations<String, String> stringStringValueOperations = stringRedisTemplate.opsForValue();
@@ -85,8 +91,8 @@ public class StationService {
             LinkedHashMap<String, String> latLon = KatecToLatLong.getLatLon(line[4], line[3]);
             System.out.println(line[0]);
             System.out.println(line[1]);
-            Optional<Line> stationLine = lineRepository.findByCsvLine(Integer.valueOf(line[0])/100);
-            if(!stationLine.isPresent()) continue;
+            Optional<Line> stationLine = lineRepository.findByCsvLine(Integer.valueOf(line[0]) / 100);
+            if (!stationLine.isPresent()) continue;
             Station station = Station.builder()
                     .statnName(line[1])
                     .statnLatitude(new BigDecimal(latLon.get("lat")))

@@ -1,13 +1,13 @@
 package com.example.hanium2023.service;
 
 import com.example.hanium2023.domain.dto.arrivalinfo.ArrivalInfoApiResult;
-import com.example.hanium2023.domain.dto.arrivalinfo.ArrivalInfoResponse;
+import com.example.hanium2023.domain.dto.arrivalinfo.ArrivalInfoPushAlarmResponse;
+import com.example.hanium2023.domain.dto.arrivalinfo.ArrivalInfoStationInfoPageResponse;
+import com.example.hanium2023.domain.dto.arrivalinfo.PushAlarmResponse;
 import com.example.hanium2023.domain.dto.user.UserDto;
 import com.example.hanium2023.enums.MovingMessageEnum;
 import com.example.hanium2023.repository.UserRepository;
-import com.example.hanium2023.util.CsvParsing;
 import com.example.hanium2023.util.JsonUtil;
-import com.example.hanium2023.util.KatecToLatLong;
 import lombok.RequiredArgsConstructor;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -21,11 +21,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
-import java.math.BigDecimal;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.util.LinkedHashMap;
 import java.util.List;
 
 import java.time.LocalDateTime;
@@ -42,7 +40,27 @@ public class PublicApiService {
     private final UserRepository userRepository;
     private final StringRedisTemplate stringRedisTemplate;
 
-    public List<ArrivalInfoResponse> getRealTimeInfos(String stationName, String exitName) {
+    public List<ArrivalInfoStationInfoPageResponse> getRealTimeInfoForStationInfoPage(String stationName, String lineId) {
+        JSONObject apiResultJsonObject = getApiResult(buildRealTimeApiUrl(stationName));
+        JSONArray jsonArray = (JSONArray) apiResultJsonObject.get("realtimeArrivalList");
+
+        List<ArrivalInfoApiResult> arrivalInfoApiResultList = jsonUtil.convertJsonArrayToDtoList(jsonArray, ArrivalInfoApiResult.class)
+                .stream()
+                .map(this::correctArrivalTime)
+                .filter(this::removeExpiredArrivalInfo)
+                .filter(apiResult -> {
+                    return filterArrivalInfoByLineId(apiResult, lineId);
+                })
+                .collect(Collectors.toList());
+
+        return arrivalInfoApiResultList
+                .stream()
+                .map(ArrivalInfoStationInfoPageResponse::new)
+                .collect(Collectors.toList());
+
+    }
+
+    public PushAlarmResponse getRealTimeInfoForPushAlarm(String stationName, String exitName) {
         JSONObject apiResultJsonObject = getApiResult(buildRealTimeApiUrl(stationName));
         JSONArray jsonArray = (JSONArray) apiResultJsonObject.get("realtimeArrivalList");
 
@@ -52,19 +70,21 @@ public class PublicApiService {
                 .stream()
                 .filter(this::removeTooFarArrivalInfo)
                 .map(this::correctArrivalTime)
-                .filter(this::removeExpiredArrivalInfo)
+                .filter(this::removeInvalidArrivalInfo)
                 .collect(Collectors.toList());
 
-        return arrivalInfoApiResultList
+        return new PushAlarmResponse(arrivalInfoApiResultList
                 .stream()
-                .map(ArrivalInfoResponse::new)
+                .map(apiResult -> {
+                    return new ArrivalInfoPushAlarmResponse(apiResult, stationName);
+                })
                 .map(apiResult -> calculateMovingTime(apiResult, stationName, exitName, userDto))
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()));
     }
 
-    private ArrivalInfoResponse calculateMovingTime(ArrivalInfoResponse arrivalInfoResponse, String stationName, String exitName, UserDto userDto) {
+    private ArrivalInfoPushAlarmResponse calculateMovingTime(ArrivalInfoPushAlarmResponse arrivalInfoPushAlarmResponse, String stationName, String exitName, UserDto userDto) {
         ValueOperations<String, String> stringStringValueOperations = stringRedisTemplate.opsForValue();
-        String stationId = stringStringValueOperations.get(stationName + "/" + arrivalInfoResponse.getLineName());
+        String stationId = stringStringValueOperations.get(stationName + "/" + arrivalInfoPushAlarmResponse.getLineId());
 
         double distance = Double.parseDouble(stringStringValueOperations.get(stationId + "/" + exitName));
         double userWalkingSpeed = userDto.getWalkingSpeed();
@@ -72,19 +92,19 @@ public class PublicApiService {
 
         // 최대 이동 속도를 구함 ( m/s 단위)
         // 최소 movingSpeed보다 빠르게 이동해야 탈 수 있음
-        double minMovingSpeed = distance / (double) arrivalInfoResponse.getArrivalTime();
+        double minMovingSpeed = distance / (double) arrivalInfoPushAlarmResponse.getArrivalTime();
         Pair<MovingMessageEnum, Double> movingSpeedInfo = getMovingSpeedInfo(userWalkingSpeed, userRunningSpeed, minMovingSpeed);
 
         long movingTime = (long) (distance / movingSpeedInfo.getSecond());
-        arrivalInfoResponse.setMovingTime(movingTime > 0 ? movingTime : 0);
+        arrivalInfoPushAlarmResponse.setMovingTime(movingTime > 0 ? movingTime : 0);
 
         if (movingSpeedInfo.getSecond() == -1)
-            arrivalInfoResponse.setMessage(movingSpeedInfo.getFirst().getMessage());
+            arrivalInfoPushAlarmResponse.setMessage(movingSpeedInfo.getFirst().getMessage());
         else
-            arrivalInfoResponse.setMessage(movingTime + "초 동안 " + movingSpeedInfo.getFirst().getMessage());
+            arrivalInfoPushAlarmResponse.setMessage(movingTime + "초 동안 " + movingSpeedInfo.getFirst().getMessage());
 
-        arrivalInfoResponse.setMovingSpeedStep(movingSpeedInfo.getFirst().getMovingSpeedStep());
-        return arrivalInfoResponse;
+        arrivalInfoPushAlarmResponse.setMovingSpeedStep(movingSpeedInfo.getFirst().getMovingSpeedStep());
+        return arrivalInfoPushAlarmResponse;
     }
 
     private Pair<MovingMessageEnum, Double> getMovingSpeedInfo(double walkingSpeed, double runningSpeed, double minMovingSpeed) {
@@ -116,19 +136,20 @@ public class PublicApiService {
         return apiResult;
     }
 
+    private boolean filterArrivalInfoByLineId(ArrivalInfoApiResult arrivalInfo, String lineId) {
+        return arrivalInfo.getLineId().equals(lineId);
+    }
+
     private boolean removeTooFarArrivalInfo(ArrivalInfoApiResult arrivalInfo) {
-        if (arrivalInfo.getArrivalTime() == 0)
-            return false;
-        else
-            return true;
+        return arrivalInfo.getArrivalTime() != 0;
+    }
+
+    private boolean removeInvalidArrivalInfo(ArrivalInfoApiResult arrivalInfo) {
+        return arrivalInfo.getArrivalTime() >= 30 && arrivalInfo.getArrivalTime() <= 300;
     }
 
     private boolean removeExpiredArrivalInfo(ArrivalInfoApiResult arrivalInfo) {
-        long arrivalTime = arrivalInfo.getArrivalTime();
-        if (arrivalTime < 30 || arrivalTime > 300)
-            return false;
-        else
-            return true;
+        return arrivalInfo.getArrivalTime() > 0;
     }
 
     private JSONObject getApiResult(String apiUrl) {
