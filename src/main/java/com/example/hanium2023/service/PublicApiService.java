@@ -3,7 +3,7 @@ package com.example.hanium2023.service;
 import com.example.hanium2023.domain.dto.arrivalinfo.ArrivalInfoApiResult;
 import com.example.hanium2023.domain.dto.arrivalinfo.ArrivalInfoPushAlarmResponse;
 import com.example.hanium2023.domain.dto.arrivalinfo.ArrivalInfoStationInfoPageResponse;
-import com.example.hanium2023.domain.dto.arrivalinfo.PushAlarmResponse;
+import com.example.hanium2023.domain.dto.station.PushAlarmResponse;
 import com.example.hanium2023.domain.dto.user.UserDto;
 import com.example.hanium2023.enums.ArrivalCodeEnum;
 import com.example.hanium2023.enums.MovingMessageEnum;

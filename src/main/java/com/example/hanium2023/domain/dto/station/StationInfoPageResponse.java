@@ -7,6 +7,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
 
 @Data
 public class StationInfoPageResponse {
@@ -16,6 +17,6 @@ public class StationInfoPageResponse {
     public StationInfoPageResponse(List<ArrivalInfoStationInfoPageResponse> arrivalInfo, double congestion) {
         this.arrivalInfo = arrivalInfo;
         this.congestion = congestion;
-        this.currentTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd a HH:mm:ss"));
+        this.currentTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd a HH:mm:ss").withLocale(Locale.forLanguageTag("ko")));
     }
 }
