@@ -4,11 +4,18 @@ import com.example.hanium2023.domain.dto.arrivalinfo.ArrivalInfoStationInfoPageR
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Data
-@AllArgsConstructor
 public class StationInfoPageResponse {
     List<ArrivalInfoStationInfoPageResponse> arrivalInfo;
     double congestion;
+    String currentTime;
+    public StationInfoPageResponse(List<ArrivalInfoStationInfoPageResponse> arrivalInfo, double congestion) {
+        this.arrivalInfo = arrivalInfo;
+        this.congestion = congestion;
+        this.currentTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd a HH:mm:ss"));
+    }
 }

@@ -15,15 +15,17 @@ public class ArrivalInfoPushAlarmResponse {
     String destination;
     String message;
     int movingSpeedStep;
-    String currentTime;
     String stationName;
+    String arrivalMessage2;
+    String arrivalMessage3;
 
     public ArrivalInfoPushAlarmResponse(ArrivalInfoApiResult apiResult) {
         this.arrivalTime = apiResult.getArrivalTime();
         this.direction = apiResult.getDirection();
         this.lineId = apiResult.getLineId();
         this.destination = apiResult.getDestination();
-        this.currentTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd a HH:mm:ss"));
         this.stationName = apiResult.getStationName();
+        this.arrivalMessage2 = apiResult.getArrivalMessage2();
+        this.arrivalMessage3 = apiResult.getArrivalMessage3();
     }
 }

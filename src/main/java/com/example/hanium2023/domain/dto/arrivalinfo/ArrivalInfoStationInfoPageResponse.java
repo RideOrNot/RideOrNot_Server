@@ -13,14 +13,15 @@ public class ArrivalInfoStationInfoPageResponse {
     String direction;
     String lineId;
     String destination;
-    String currentTime;
-
+    String arrivalMessage2;
+    String arrivalMessage3;
     public ArrivalInfoStationInfoPageResponse(ArrivalInfoApiResult apiResult) {
         this.arrivalTime = apiResult.getArrivalTime();
         this.direction = apiResult.getDirection();
         this.lineId = apiResult.getLineId();
         this.destination = apiResult.getDestination();
-        this.currentTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd a HH:mm:ss"));
+        this.arrivalMessage2 = apiResult.getArrivalMessage2();
+        this.arrivalMessage3 = apiResult.getArrivalMessage3();
     }
 }
 
