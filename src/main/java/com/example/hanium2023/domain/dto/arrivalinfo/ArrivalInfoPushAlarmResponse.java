@@ -15,6 +15,7 @@ public class ArrivalInfoPushAlarmResponse {
     String destination;
     String message;
     int movingSpeedStep;
+    double movingSpeed;
     String stationName;
     String arrivalMessage2;
     String arrivalMessage3;

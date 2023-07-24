@@ -9,6 +9,7 @@ import com.example.hanium2023.enums.ArrivalCodeEnum;
 import com.example.hanium2023.enums.MovingMessageEnum;
 import com.example.hanium2023.repository.UserRepository;
 import com.example.hanium2023.util.JsonUtil;
+import com.example.hanium2023.util.RedisUtil;
 import lombok.RequiredArgsConstructor;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -40,6 +41,7 @@ public class PublicApiService {
     private final JsonUtil jsonUtil;
     private final UserRepository userRepository;
     private final StringRedisTemplate stringRedisTemplate;
+    private final RedisUtil redisUtil;
 
     public List<ArrivalInfoStationInfoPageResponse> getRealTimeInfoForStationInfoPage(String stationName, String lineId) {
         JSONObject apiResultJsonObject = getApiResult(buildRealTimeApiUrl(stationName));
@@ -81,7 +83,8 @@ public class PublicApiService {
 
     private ArrivalInfoPushAlarmResponse calculateMovingTime(ArrivalInfoPushAlarmResponse arrivalInfoPushAlarmResponse, String stationName, String exitName, UserDto userDto) {
         ValueOperations<String, String> stringStringValueOperations = stringRedisTemplate.opsForValue();
-        String stationId = stringStringValueOperations.get(stationName + "/" + arrivalInfoPushAlarmResponse.getLineId());
+        Integer stationId = redisUtil.getStationIdByStationNameAndLineId(stationName, Integer.valueOf(arrivalInfoPushAlarmResponse.getLineId()));
+//                stringStringValueOperations.get(stationName + "/" + arrivalInfoPushAlarmResponse.getLineId());
 
         double distance = Double.parseDouble(stringStringValueOperations.get(stationId + "/" + exitName));
         double userWalkingSpeed = userDto.getWalkingSpeed();
@@ -101,6 +104,7 @@ public class PublicApiService {
             arrivalInfoPushAlarmResponse.setMessage(movingTime + "초 동안 " + movingSpeedInfo.getFirst().getMessage());
 
         arrivalInfoPushAlarmResponse.setMovingSpeedStep(movingSpeedInfo.getFirst().getMovingSpeedStep());
+        arrivalInfoPushAlarmResponse.setMovingSpeed(movingSpeedInfo.getSecond());
         return arrivalInfoPushAlarmResponse;
     }
 
