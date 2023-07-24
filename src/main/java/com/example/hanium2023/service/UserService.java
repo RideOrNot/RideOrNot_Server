@@ -9,6 +9,7 @@ import com.example.hanium2023.domain.entity.User;
 import com.example.hanium2023.repository.BoardingHistoryRepository;
 import com.example.hanium2023.repository.StationExitRepository;
 import com.example.hanium2023.repository.UserRepository;
+import com.example.hanium2023.util.RedisUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
@@ -23,12 +24,19 @@ public class UserService {
     private final UserRepository userRepository;
     private final BoardingHistoryRepository boardingHistoryRepository;
     private final StationExitRepository stationExitRepository;
-    private final StringRedisTemplate stringRedisTemplate;
+    private final RedisUtil redisUtil;
 
     @Transactional
     public UserAutoFeedBackResponse doAutoFeedback(UserAutoFeedbackRequest userAutoFeedbackRequest) {
         User user = userRepository.findById(1L).get();
         UserDto userDto = new UserDto(user);
+        updateUserMovingSpeed(userAutoFeedbackRequest, user, userDto);
+
+        Long boardingHistoryId = saveBoardingHistory(userAutoFeedbackRequest, user);
+        return new UserAutoFeedBackResponse(boardingHistoryId);
+    }
+
+    private void updateUserMovingSpeed(UserAutoFeedbackRequest userAutoFeedbackRequest, User user, UserDto userDto) {
         double alpha = 0.2;
         double beta = 0.35;
 
@@ -49,14 +57,10 @@ public class UserService {
             }
             user.updateRunningSpeed(newMovingSpeed);
         }
-
-        Long boardingHistoryId = saveBoardingHistory(userAutoFeedbackRequest, user);
-        return new UserAutoFeedBackResponse(boardingHistoryId);
     }
 
     private Long saveBoardingHistory(UserAutoFeedbackRequest userAutoFeedbackRequest, User user) {
-        ValueOperations<String, String> stringValueOperations = stringRedisTemplate.opsForValue();
-        Integer stationId = Integer.parseInt(stringValueOperations.get(userAutoFeedbackRequest.getStationName() + "/" + userAutoFeedbackRequest.getLineId()));
+        Integer stationId = redisUtil.getStationIdByStationNameAndLineId(userAutoFeedbackRequest.getStationName(),userAutoFeedbackRequest.getLineId());
         StationExit stationExit = stationExitRepository.findByExitNameAndStation_StationId(userAutoFeedbackRequest.getExitName(), stationId);
         BoardingHistory savedBoardingHistory = boardingHistoryRepository.save(userAutoFeedbackRequest.toEntity(stationExit, user));
         return savedBoardingHistory.getBoardingHistoryId();

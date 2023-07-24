@@ -1,6 +1,6 @@
 package com.example.hanium2023.controller;
 
-import com.example.hanium2023.domain.dto.arrivalinfo.PushAlarmResponse;
+import com.example.hanium2023.domain.dto.station.PushAlarmResponse;
 import com.example.hanium2023.domain.dto.ressponse.Response;
 import com.example.hanium2023.domain.dto.station.StationInfoPageResponse;
 import com.example.hanium2023.service.PublicApiService;

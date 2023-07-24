@@ -19,6 +19,7 @@ import java.time.format.DateTimeFormatter;
 public class UserAutoFeedbackRequest {
     boolean boarded;
     int movingSpeedStep;
+    double movingSpeed;
     String stationName;
     String boardedTime;
     Integer lineId;
@@ -29,6 +30,7 @@ public class UserAutoFeedbackRequest {
         return BoardingHistory.builder()
                 .boarded(this.boarded)
                 .movingSpeedStep(this.movingSpeedStep)
+                .movingSpeed(this.movingSpeed)
                 .boardedTime(LocalDateTime.parse(this.boardedTime, DateTimeFormatter.ofPattern("yyyy-MM-dd a HH:mm:ss")))
                 .direction(this.direction)
                 .stationExit(stationExit)
