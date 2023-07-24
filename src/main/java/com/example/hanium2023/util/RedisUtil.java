@@ -14,4 +14,9 @@ public class RedisUtil {
         ValueOperations<String, String> stringValueOperations = stringRedisTemplate.opsForValue();
         return Integer.parseInt(stringValueOperations.get(stationName + "/" + lineId));
     }
+
+    public Double getDistanceByStationNameAndExitName(Integer stationId, String exitName) {
+        ValueOperations<String, String> stringValueOperations = stringRedisTemplate.opsForValue();
+        return Double.parseDouble(stringValueOperations.get(stationId + "/" + exitName));
+    }
 }

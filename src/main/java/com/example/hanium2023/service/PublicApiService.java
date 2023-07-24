@@ -40,7 +40,6 @@ public class PublicApiService {
     private String realTimeApiKey;
     private final JsonUtil jsonUtil;
     private final UserRepository userRepository;
-    private final StringRedisTemplate stringRedisTemplate;
     private final RedisUtil redisUtil;
 
     public List<ArrivalInfoStationInfoPageResponse> getRealTimeInfoForStationInfoPage(String stationName, String lineId) {
@@ -82,11 +81,9 @@ public class PublicApiService {
     }
 
     private ArrivalInfoPushAlarmResponse calculateMovingTime(ArrivalInfoPushAlarmResponse arrivalInfoPushAlarmResponse, String stationName, String exitName, UserDto userDto) {
-        ValueOperations<String, String> stringStringValueOperations = stringRedisTemplate.opsForValue();
         Integer stationId = redisUtil.getStationIdByStationNameAndLineId(stationName, Integer.valueOf(arrivalInfoPushAlarmResponse.getLineId()));
-//                stringStringValueOperations.get(stationName + "/" + arrivalInfoPushAlarmResponse.getLineId());
+        double distance = redisUtil.getDistanceByStationNameAndExitName(stationId, exitName);
 
-        double distance = Double.parseDouble(stringStringValueOperations.get(stationId + "/" + exitName));
         double userWalkingSpeed = userDto.getWalkingSpeed();
         double userRunningSpeed = userDto.getRunningSpeed();
 
