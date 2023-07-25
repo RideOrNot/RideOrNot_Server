@@ -82,7 +82,7 @@ public class PublicApiService {
 
     private ArrivalInfoPushAlarmResponse calculateMovingTime(ArrivalInfoPushAlarmResponse arrivalInfoPushAlarmResponse, String stationName, String exitName, UserDto userDto) {
         Integer stationId = redisUtil.getStationIdByStationNameAndLineId(stationName, Integer.valueOf(arrivalInfoPushAlarmResponse.getLineId()));
-        double distance = redisUtil.getDistanceByStationNameAndExitName(stationId, exitName);
+        double distance = redisUtil.getDistanceByStationIdAndExitName(stationId, exitName);
 
         double userWalkingSpeed = userDto.getWalkingSpeed();
         double userRunningSpeed = userDto.getRunningSpeed();

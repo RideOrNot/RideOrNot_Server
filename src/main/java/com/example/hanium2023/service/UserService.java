@@ -31,9 +31,17 @@ public class UserService {
         User user = userRepository.findById(1L).get();
         UserDto userDto = new UserDto(user);
         updateUserMovingSpeed(userAutoFeedbackRequest, user, userDto);
-
+        updateDistance(userAutoFeedbackRequest);
         Long boardingHistoryId = saveBoardingHistory(userAutoFeedbackRequest, user);
         return new UserAutoFeedBackResponse(boardingHistoryId);
+    }
+
+    public void updateDistance(UserAutoFeedbackRequest userAutoFeedbackRequest) {
+        Integer stationId = redisUtil.getStationIdByStationNameAndLineId(userAutoFeedbackRequest.getStationName(), userAutoFeedbackRequest.getLineId());
+        Double existingDistance = redisUtil.getDistanceByStationIdAndExitName(stationId, userAutoFeedbackRequest.getExitName());
+        Double deviation = 0.05 * (existingDistance - userAutoFeedbackRequest.getMovingSpeed() * userAutoFeedbackRequest.getMovingTime());
+        Double newDistance = userAutoFeedbackRequest.isBoarded() ? (existingDistance - deviation) : (existingDistance + deviation);
+        redisUtil.putDistance(stationId, userAutoFeedbackRequest.getExitName(), newDistance);
     }
 
     private void updateUserMovingSpeed(UserAutoFeedbackRequest userAutoFeedbackRequest, User user, UserDto userDto) {
@@ -60,7 +68,7 @@ public class UserService {
     }
 
     private Long saveBoardingHistory(UserAutoFeedbackRequest userAutoFeedbackRequest, User user) {
-        Integer stationId = redisUtil.getStationIdByStationNameAndLineId(userAutoFeedbackRequest.getStationName(),userAutoFeedbackRequest.getLineId());
+        Integer stationId = redisUtil.getStationIdByStationNameAndLineId(userAutoFeedbackRequest.getStationName(), userAutoFeedbackRequest.getLineId());
         StationExit stationExit = stationExitRepository.findByExitNameAndStation_StationId(userAutoFeedbackRequest.getExitName(), stationId);
         BoardingHistory savedBoardingHistory = boardingHistoryRepository.save(userAutoFeedbackRequest.toEntity(stationExit, user));
         return savedBoardingHistory.getBoardingHistoryId();
