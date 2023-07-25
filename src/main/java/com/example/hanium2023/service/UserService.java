@@ -36,7 +36,7 @@ public class UserService {
         return new UserAutoFeedBackResponse(boardingHistoryId);
     }
 
-    public void updateDistance(UserAutoFeedbackRequest userAutoFeedbackRequest) {
+    private void updateDistance(UserAutoFeedbackRequest userAutoFeedbackRequest) {
         Integer stationId = redisUtil.getStationIdByStationNameAndLineId(userAutoFeedbackRequest.getStationName(), userAutoFeedbackRequest.getLineId());
         Double existingDistance = redisUtil.getDistanceByStationIdAndExitName(stationId, userAutoFeedbackRequest.getExitName());
         Double deviation = 0.05 * (existingDistance - userAutoFeedbackRequest.getMovingSpeed() * userAutoFeedbackRequest.getMovingTime());
