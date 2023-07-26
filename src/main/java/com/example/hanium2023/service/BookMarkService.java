@@ -1,6 +1,5 @@
 package com.example.hanium2023.service;
 
-import com.example.hanium2023.domain.dto.bookmark.BookMarkRequest;
 import com.example.hanium2023.domain.entity.BookMark;
 import com.example.hanium2023.domain.entity.Station;
 import com.example.hanium2023.domain.entity.User;
@@ -9,12 +8,8 @@ import com.example.hanium2023.repository.StationRepository;
 import com.example.hanium2023.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.crossstore.ChangeSetPersister;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-
 
 @Service
 @RequiredArgsConstructor
@@ -23,13 +18,7 @@ public class BookMarkService {
     private final UserRepository userRepository;
     private final StationRepository stationRepository;
 
-
-    /* public String bookMarkInfo(String stationName, String userId){
-        return BookMark.
-    }*/
-
     @Transactional // 북마크 추가
-    // requestparam 어노테이션 사용
     public void insert(Long userId, Integer stationId) throws Exception {
 
         User user = userRepository.findById(userId)
@@ -50,7 +39,28 @@ public class BookMarkService {
         bookMarkRepository.save(bookMark);
     }
 
-    // requestbody 어노테이션 사용 시
+    @Transactional // 북마크 삭제
+    public void delete(Long userId, Integer stationId) throws ChangeSetPersister.NotFoundException {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ChangeSetPersister.NotFoundException());
+
+        Station station= stationRepository.findById(stationId)
+                .orElseThrow(() -> new ChangeSetPersister.NotFoundException());
+
+        BookMark bookMark = bookMarkRepository.findByUserAndStation(user, station)
+                .orElseThrow(() -> new ChangeSetPersister.NotFoundException());
+
+        bookMarkRepository.delete(bookMark);
+    }
+}
+
+
+
+
+
+    //requestbody 어노테이션 사용 시
+    //북마크 추가
     /* public void insert(BookMarkRequest bookMarkRequest) throws Exception {
 
         User user = userRepository.findById(bookMarkRequest.getUserId())
@@ -71,21 +81,8 @@ public class BookMarkService {
         bookMarkRepository.save(bookMark);
     }*/
 
-    @Transactional // 북마크 삭제
-    public void delete(Long userId, Integer stationId) throws ChangeSetPersister.NotFoundException {
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ChangeSetPersister.NotFoundException());
-
-        Station station= stationRepository.findById(stationId)
-                .orElseThrow(() -> new ChangeSetPersister.NotFoundException());
-
-        BookMark bookMark = bookMarkRepository.findByUserAndStation(user, station)
-                .orElseThrow(() -> new ChangeSetPersister.NotFoundException());
-
-        bookMarkRepository.delete(bookMark);
-    }
-
+    //북마크 해제
     /*public void delete(BookMarkRequest bookMarkRequest) throws ChangeSetPersister.NotFoundException {
 
         User user = userRepository.findById(bookMarkRequest.getUserId())
@@ -99,5 +96,3 @@ public class BookMarkService {
 
         bookMarkRepository.delete(bookMark);
     }*/
-
-}

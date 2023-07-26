@@ -1,7 +1,5 @@
 package com.example.hanium2023.domain.dto.bookmark;
 
-import com.example.hanium2023.domain.entity.Station;
-import com.example.hanium2023.domain.entity.User;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
