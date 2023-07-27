@@ -15,7 +15,6 @@ public class BookMarkController {
     private final BookMarkService bookMarkService;
 
     @PostMapping("/insert") //북마크 추가
-    //같은역, 같은 아이디 동시에 들어가지 않게 해야함(지울 때 안지워짐)
     public Response<?> insert(@RequestParam Long userId, @RequestParam Integer stationId) throws Exception {
         bookMarkService.insert(userId, stationId);
         return success(null);
@@ -26,6 +25,12 @@ public class BookMarkController {
         bookMarkService.delete(userId, stationId);
         return success(null);
     }
+
+    @GetMapping("/list/{userId}") // 북마크 조회
+    public Response<?> getBookMarkList(@PathVariable("userId") Long userId){
+        return Response.success(bookMarkService.getBookMarkList(userId));
+    }
+
 }
 
 

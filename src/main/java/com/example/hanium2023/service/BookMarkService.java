@@ -9,7 +9,6 @@ import com.example.hanium2023.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -18,7 +17,8 @@ public class BookMarkService {
     private final UserRepository userRepository;
     private final StationRepository stationRepository;
 
-    @Transactional // 북마크 추가
+
+    // 북마크 추가
     public void insert(Long userId, Integer stationId) throws Exception {
 
         User user = userRepository.findById(userId)
@@ -28,7 +28,7 @@ public class BookMarkService {
                 .orElseThrow(() -> new ChangeSetPersister.NotFoundException());
 
         //if (bookMarkRepository.findByUserAndStation(user, station).isPresent()){
-            //이미 북마크 되어있으면 북마크 취소
+            //이미 북마크 되어있으면 북마크 취소 - 추가, 삭제 따로? or 이미 되어있으면 삭제?
         //}
 
         BookMark bookMark = BookMark.builder()
@@ -39,7 +39,8 @@ public class BookMarkService {
         bookMarkRepository.save(bookMark);
     }
 
-    @Transactional // 북마크 삭제
+
+    // 북마크 삭제
     public void delete(Long userId, Integer stationId) throws ChangeSetPersister.NotFoundException {
 
         User user = userRepository.findById(userId)
@@ -53,6 +54,13 @@ public class BookMarkService {
 
         bookMarkRepository.delete(bookMark);
     }
+
+
+    //북마크 조회
+    public Long getBookMarkList(Long userId) {
+        return userId; //return new StationInfoPageResponse(publicApiService.getRealTimeInfoForStationInfoPage(stationName, lineId), 0);
+    }
+
 }
 
 
