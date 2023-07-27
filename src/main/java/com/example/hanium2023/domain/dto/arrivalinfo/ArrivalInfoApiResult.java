@@ -26,14 +26,29 @@ public class ArrivalInfoApiResult {
     @JsonProperty("recptnDt")
     private String createdAt;
 
+    @JsonProperty("statnNm")
+    private String stationName;
+
+    @JsonProperty("arvlCd")
+    private int arrivalCode;
+    @JsonProperty("arvlMsg2")
+    private String arrivalMessage2;
+
+    @JsonProperty("arvlMsg3")
+    private String arrivalMessage3;
+
     @Override
     public String toString() {
         return "ArrivalInfoApiResult{" +
                 "arrivalTime=" + arrivalTime +
                 ", direction='" + direction + '\'' +
-                ", lineName='" + lineId + '\'' +
+                ", lineId='" + lineId + '\'' +
                 ", destination='" + destination + '\'' +
                 ", createdAt='" + createdAt + '\'' +
+                ", stationName='" + stationName + '\'' +
+                ", arrivalCode=" + arrivalCode +
+                ", arrivalMessage2='" + arrivalMessage2 + '\'' +
+                ", arrivalMessage3='" + arrivalMessage3 + '\'' +
                 '}';
     }
 }

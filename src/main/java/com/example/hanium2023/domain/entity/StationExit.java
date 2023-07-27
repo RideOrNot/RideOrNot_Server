@@ -18,7 +18,6 @@ import java.math.BigDecimal;
 public class StationExit{
     @Id
     private String exitName;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @Id
     @JoinColumn(name = "statn_id", nullable = false)
