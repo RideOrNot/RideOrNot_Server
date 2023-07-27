@@ -103,5 +103,35 @@ public class StationService {
             stationRepository.save(station);
         }
     }
+    public void insertRelatedStation() throws IOException, InterruptedException {
+        CsvParsing festivalCSVParsing = new CsvParsing("file path");
+        String[] line = null;
+        int lineCount = 0;
+        while ((line = festivalCSVParsing.nextRead()) != null) {
+            if (lineCount == 0) {
+                lineCount++;
+                continue;
+            }
+            Optional<Station> existedStation = stationRepository.findById(Integer.valueOf(line[0]));
+            if(existedStation.isEmpty()) continue;
+            Station updatedStation = Station.builder()
+                    .statnName(existedStation.get().getStatnName())
+                    .stationId(existedStation.get().getStationId())
+                    .statnLongitude(existedStation.get().getStatnLongitude())
+                    .statnLatitude(existedStation.get().getStatnLatitude())
+                    .beforeStationId1(Integer.valueOf((line[9])))
+                    .beforeStationId2(Integer.valueOf((line[11])))
+                    .nextStationId1(Integer.valueOf((line[5])))
+                    .nextStationId2(Integer.valueOf((line[7])))
+                    .nextStation1(line[6])
+                    .nextStation2(line[8])
+                    .beforeStation1(line[10])
+                    .beforeStation2(line[12])
+                    .line(existedStation.get().getLine())
+                    .stationExits(existedStation.get().getStationExits())
+                    .build();
+            stationRepository.save(updatedStation);
+        }
+    }
 }
 

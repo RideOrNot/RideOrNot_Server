@@ -24,12 +24,21 @@ public class Station {
     @Column(precision =9, scale = 6)
     private BigDecimal statnLongitude;
 
+    private Integer beforeStationId1;
+    private String beforeStation1;
+    private Integer nextStationId1;
+    private String nextStation1;
+    private Integer beforeStationId2;
+    private String beforeStation2;
+    private Integer nextStationId2;
+    private String nextStation2;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "line_id", nullable = false)
     private Line line;
 
     @OneToMany(mappedBy = "station", cascade = CascadeType.REMOVE, orphanRemoval = true)
-    List<StationExit> stationExits  = new ArrayList<>();
+    private List<StationExit> stationExits  = new ArrayList<>();
 
 
 }
