@@ -28,6 +28,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -40,20 +41,43 @@ public class PublicApiService {
     private final UserRepository userRepository;
     private final RedisUtil redisUtil;
 
+    public List<ArrivalInfoStationInfoPageResponse> getArrivalInfo(String stationName) {
+        JSONObject apiResultJsonObject = getApiResult(buildRealTimeApiUrl(stationName));
+        JSONArray jsonArray = (JSONArray) apiResultJsonObject.get("realtimeArrivalList");
+        List<ArrivalInfoApiResult> arrivalInfoApiResultList;
+
+        if (jsonArray != null) {
+            arrivalInfoApiResultList = jsonUtil.convertJsonArrayToDtoList(jsonArray, ArrivalInfoApiResult.class)
+                    .stream()
+                    .map(this::correctArrivalTime)
+                    .filter(this::removeExpiredArrivalInfo)
+                    .sorted(Comparator.comparing(ArrivalInfoApiResult::getLineId))
+                    .collect(Collectors.toList());
+        } else {
+            arrivalInfoApiResultList = new ArrayList<>();
+        }
+
+        return arrivalInfoApiResultList
+                .stream()
+                .map(ArrivalInfoStationInfoPageResponse::new)
+                .collect(Collectors.toList());
+    }
+
     public List<ArrivalInfoStationInfoPageResponse> getRealTimeInfoForStationInfoPage(String stationName, String lineId) {
         JSONObject apiResultJsonObject = getApiResult(buildRealTimeApiUrl(stationName));
         JSONArray jsonArray = (JSONArray) apiResultJsonObject.get("realtimeArrivalList");
         List<ArrivalInfoApiResult> arrivalInfoApiResultList;
 
-        if (jsonArray == null)
+        if (jsonArray != null) {
+            arrivalInfoApiResultList = jsonUtil.convertJsonArrayToDtoList(jsonArray, ArrivalInfoApiResult.class)
+                    .stream()
+                    .map(this::correctArrivalTime)
+                    .filter(this::removeExpiredArrivalInfo)
+                    .filter(apiResult -> filterArrivalInfoByLineId(apiResult, lineId))
+                    .collect(Collectors.toList());
+        } else {
             arrivalInfoApiResultList = new ArrayList<>();
-
-        arrivalInfoApiResultList = jsonUtil.convertJsonArrayToDtoList(jsonArray, ArrivalInfoApiResult.class)
-                .stream()
-                .map(this::correctArrivalTime)
-                .filter(this::removeExpiredArrivalInfo)
-                .filter(apiResult -> filterArrivalInfoByLineId(apiResult, lineId))
-                .collect(Collectors.toList());
+        }
 
         return arrivalInfoApiResultList
                 .stream()
@@ -67,17 +91,18 @@ public class PublicApiService {
         JSONArray jsonArray = (JSONArray) apiResultJsonObject.get("realtimeArrivalList");
         List<ArrivalInfoApiResult> arrivalInfoApiResultList;
 
-        if (jsonArray == null)
+        if (jsonArray != null){
+            arrivalInfoApiResultList = jsonUtil.convertJsonArrayToDtoList(jsonArray, ArrivalInfoApiResult.class)
+                    .stream()
+                    .filter(this::removeTooFarArrivalInfo)
+                    .map(this::correctArrivalTime)
+                    .filter(this::removeInvalidArrivalInfo)
+                    .collect(Collectors.toList());
+        } else {
             arrivalInfoApiResultList = new ArrayList<>();
+        }
 
         UserDto userDto = new UserDto(userRepository.findById(1L).get());
-
-        arrivalInfoApiResultList = jsonUtil.convertJsonArrayToDtoList(jsonArray, ArrivalInfoApiResult.class)
-                .stream()
-                .filter(this::removeTooFarArrivalInfo)
-                .map(this::correctArrivalTime)
-                .filter(this::removeInvalidArrivalInfo)
-                .collect(Collectors.toList());
 
         return new PushAlarmResponse(arrivalInfoApiResultList
                 .stream()

@@ -1,5 +1,6 @@
 package com.example.hanium2023.service;
 
+import com.example.hanium2023.domain.dto.station.ArrivalInfoResponse;
 import com.example.hanium2023.domain.dto.station.StationInfoPageResponse;
 import com.example.hanium2023.domain.entity.Line;
 import com.example.hanium2023.domain.entity.Station;
@@ -31,6 +32,10 @@ public class StationService {
 
     public StationInfoPageResponse getStationInfo(String stationName, String lineId) {
         return new StationInfoPageResponse(publicApiService.getRealTimeInfoForStationInfoPage(stationName, lineId), 0);
+    }
+
+    public ArrivalInfoResponse getStationArrivalInfo(String stationName) {
+        return new ArrivalInfoResponse(publicApiService.getArrivalInfo(stationName));
     }
 
     public String insertDistances() {
