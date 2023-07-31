@@ -30,6 +30,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -43,18 +44,16 @@ public class PublicApiService {
 
     public List<ArrivalInfoStationInfoPageResponse> getArrivalInfo(String stationName) {
         JSONObject apiResultJsonObject = getApiResult(buildRealTimeApiUrl(stationName));
-        JSONArray jsonArray = (JSONArray) apiResultJsonObject.get("realtimeArrivalList");
-        List<ArrivalInfoApiResult> arrivalInfoApiResultList;
+        Optional<JSONArray> jsonArray = Optional.ofNullable((JSONArray) apiResultJsonObject.get("realtimeArrivalList"));
+        List<ArrivalInfoApiResult> arrivalInfoApiResultList = new ArrayList<>();
 
-        if (jsonArray != null) {
-            arrivalInfoApiResultList = jsonUtil.convertJsonArrayToDtoList(jsonArray, ArrivalInfoApiResult.class)
+        if (jsonArray.isPresent()) {
+            arrivalInfoApiResultList = jsonUtil.convertJsonArrayToDtoList(jsonArray.get(), ArrivalInfoApiResult.class)
                     .stream()
                     .map(this::correctArrivalTime)
                     .filter(this::removeExpiredArrivalInfo)
                     .sorted(Comparator.comparing(ArrivalInfoApiResult::getLineId))
                     .collect(Collectors.toList());
-        } else {
-            arrivalInfoApiResultList = new ArrayList<>();
         }
 
         return arrivalInfoApiResultList
@@ -65,18 +64,16 @@ public class PublicApiService {
 
     public List<ArrivalInfoStationInfoPageResponse> getRealTimeInfoForStationInfoPage(String stationName, String lineId) {
         JSONObject apiResultJsonObject = getApiResult(buildRealTimeApiUrl(stationName));
-        JSONArray jsonArray = (JSONArray) apiResultJsonObject.get("realtimeArrivalList");
-        List<ArrivalInfoApiResult> arrivalInfoApiResultList;
+        Optional<JSONArray> jsonArray = Optional.ofNullable((JSONArray) apiResultJsonObject.get("realtimeArrivalList"));
+        List<ArrivalInfoApiResult> arrivalInfoApiResultList = new ArrayList<>();
 
-        if (jsonArray != null) {
-            arrivalInfoApiResultList = jsonUtil.convertJsonArrayToDtoList(jsonArray, ArrivalInfoApiResult.class)
+        if (jsonArray.isPresent()) {
+            arrivalInfoApiResultList = jsonUtil.convertJsonArrayToDtoList(jsonArray.get(), ArrivalInfoApiResult.class)
                     .stream()
                     .map(this::correctArrivalTime)
                     .filter(this::removeExpiredArrivalInfo)
                     .filter(apiResult -> filterArrivalInfoByLineId(apiResult, lineId))
                     .collect(Collectors.toList());
-        } else {
-            arrivalInfoApiResultList = new ArrayList<>();
         }
 
         return arrivalInfoApiResultList
@@ -88,18 +85,16 @@ public class PublicApiService {
 
     public PushAlarmResponse getRealTimeInfoForPushAlarm(String stationName, String exitName) {
         JSONObject apiResultJsonObject = getApiResult(buildRealTimeApiUrl(stationName));
-        JSONArray jsonArray = (JSONArray) apiResultJsonObject.get("realtimeArrivalList");
-        List<ArrivalInfoApiResult> arrivalInfoApiResultList;
+        Optional<JSONArray> jsonArray = Optional.ofNullable((JSONArray) apiResultJsonObject.get("realtimeArrivalList"));
+        List<ArrivalInfoApiResult> arrivalInfoApiResultList = new ArrayList<>();
 
-        if (jsonArray != null){
-            arrivalInfoApiResultList = jsonUtil.convertJsonArrayToDtoList(jsonArray, ArrivalInfoApiResult.class)
+        if (jsonArray.isPresent()){
+            arrivalInfoApiResultList = jsonUtil.convertJsonArrayToDtoList(jsonArray.get(), ArrivalInfoApiResult.class)
                     .stream()
                     .filter(this::removeTooFarArrivalInfo)
                     .map(this::correctArrivalTime)
                     .filter(this::removeInvalidArrivalInfo)
                     .collect(Collectors.toList());
-        } else {
-            arrivalInfoApiResultList = new ArrayList<>();
         }
 
         UserDto userDto = new UserDto(userRepository.findById(1L).get());
