@@ -29,7 +29,6 @@ public class UserService {
     @Transactional
     public UserAutoFeedBackResponse doAutoFeedback(UserAutoFeedbackRequest userAutoFeedbackRequest) {
         User user = userRepository.findById(1L).get();
-        UserDto userDto = new UserDto(user);
         updateUserMovingSpeed(userAutoFeedbackRequest, user);
         updateDistance(userAutoFeedbackRequest, user);
         Long boardingHistoryId = saveBoardingHistory(userAutoFeedbackRequest, user);
