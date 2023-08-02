@@ -30,7 +30,7 @@ public class UserService {
     public UserAutoFeedBackResponse doAutoFeedback(UserAutoFeedbackRequest userAutoFeedbackRequest) {
         User user = userRepository.findById(1L).get();
         UserDto userDto = new UserDto(user);
-        updateUserMovingSpeed(userAutoFeedbackRequest, user, userDto);
+        updateUserMovingSpeed(userAutoFeedbackRequest, user);
         updateDistance(userAutoFeedbackRequest, user);
         Long boardingHistoryId = saveBoardingHistory(userAutoFeedbackRequest, user);
         return new UserAutoFeedBackResponse(boardingHistoryId);
@@ -44,7 +44,7 @@ public class UserService {
         redisUtil.putDistance(stationId, userAutoFeedbackRequest.getExitName(), newDistance);
     }
 
-    private void updateUserMovingSpeed(UserAutoFeedbackRequest userAutoFeedbackRequest, User user, UserDto userDto) {
+    private void updateUserMovingSpeed(UserAutoFeedbackRequest userAutoFeedbackRequest, User user) {
         double alpha = 0.2;
         double beta = 0.35;
 
@@ -82,8 +82,7 @@ public class UserService {
     }
 
     private double getDeviationPercentageByUser(User user) {
-        long boardingHistoryCount = 1;
-//        long boardingHistoryCount = boardingHistoryRepository.countByUser(user);
+        long boardingHistoryCount = boardingHistoryRepository.countByUser(user);
         if (boardingHistoryCount >= 100) {
             return 1;
         } else {
