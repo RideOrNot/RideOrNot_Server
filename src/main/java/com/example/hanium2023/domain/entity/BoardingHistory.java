@@ -22,6 +22,7 @@ public class BoardingHistory {
     private boolean boarded;
     private int movingSpeedStep;
     private double movingSpeed;
+    private long movingTime;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm", timezone = "Asia/Seoul")
     private LocalDateTime boardedTime;
     private String direction;

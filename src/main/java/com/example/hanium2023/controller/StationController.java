@@ -1,5 +1,6 @@
 package com.example.hanium2023.controller;
 
+import com.example.hanium2023.domain.dto.station.ArrivalInfoResponse;
 import com.example.hanium2023.domain.dto.station.PushAlarmResponse;
 import com.example.hanium2023.domain.dto.ressponse.Response;
 import com.example.hanium2023.domain.dto.station.StationInfoPageResponse;
@@ -15,7 +16,7 @@ public class StationController {
     private final StationService stationService;
     private final PublicApiService publicApiService;
 
-    @GetMapping("/arrivalInfo")
+    @GetMapping("/pushAlarm")
     public Response<PushAlarmResponse> getRealTimeInfoForPushAlarm(@RequestParam String stationName, @RequestParam String exitName) {
         return Response.success(publicApiService.getRealTimeInfoForPushAlarm(stationName, exitName));
     }
@@ -25,6 +26,10 @@ public class StationController {
         return Response.success(stationService.getStationInfo(stationName,lineId));
     }
 
+    @GetMapping("/arrivalInfo/{stationName}")
+    public Response<ArrivalInfoResponse> getArrivalInfo(@PathVariable("stationName") String stationName){
+        return Response.success(stationService.getStationArrivalInfo(stationName));
+    }
     @GetMapping("/insert/distance")
     public String insertDistances() {
         return stationService.insertDistances();

@@ -20,6 +20,7 @@ public class UserAutoFeedbackRequest {
     boolean boarded;
     int movingSpeedStep;
     double movingSpeed;
+    long movingTime;
     String stationName;
     String boardedTime;
     Integer lineId;
@@ -31,6 +32,7 @@ public class UserAutoFeedbackRequest {
                 .boarded(this.boarded)
                 .movingSpeedStep(this.movingSpeedStep)
                 .movingSpeed(this.movingSpeed)
+                .movingTime(this.movingTime)
                 .boardedTime(LocalDateTime.parse(this.boardedTime, DateTimeFormatter.ofPattern("yyyy-MM-dd a HH:mm:ss")))
                 .direction(this.direction)
                 .stationExit(stationExit)
