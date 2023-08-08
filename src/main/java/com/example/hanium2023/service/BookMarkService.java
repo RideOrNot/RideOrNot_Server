@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class BookMarkService {
@@ -17,31 +19,12 @@ public class BookMarkService {
     private final UserRepository userRepository;
     private final StationRepository stationRepository;
 
-
-    // 북마크 추가
-    public void insert(Long userId, Integer stationId) throws Exception {
-
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ChangeSetPersister.NotFoundException());
-
-        Station station = stationRepository.findById(stationId)
-                .orElseThrow(() -> new ChangeSetPersister.NotFoundException());
-
-        //if (bookMarkRepository.findByUserAndStation(user, station).isPresent()){
-            //이미 북마크 되어있으면 북마크 취소 - 추가, 삭제 따로? or 이미 되어있으면 삭제?
-        //}
-
-        BookMark bookMark = BookMark.builder()
-                .station(station)
-                .user(user)
-                .build();
-
-        bookMarkRepository.save(bookMark);
+    public List<BookMark> getAllBookmarks() {
+        return bookMarkRepository.findAll();
     }
 
-
-    // 북마크 삭제
-    public void delete(Long userId, Integer stationId) throws ChangeSetPersister.NotFoundException {
+    // 북마크 추가
+    public void bookmarks(Long userId, Integer stationId) throws Exception {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ChangeSetPersister.NotFoundException());
@@ -49,58 +32,20 @@ public class BookMarkService {
         Station station= stationRepository.findById(stationId)
                 .orElseThrow(() -> new ChangeSetPersister.NotFoundException());
 
-        BookMark bookMark = bookMarkRepository.findByUserAndStation(user, station)
-                .orElseThrow(() -> new ChangeSetPersister.NotFoundException());
+        //북마크 해제
+        if(false) {
+            BookMark bookMark = bookMarkRepository.findByUserAndStation(user, station)
+                    .orElseThrow(() -> new ChangeSetPersister.NotFoundException());
 
-        bookMarkRepository.delete(bookMark);
+            bookMarkRepository.delete(bookMark);
+
+        }else{ //북마크 추가
+            BookMark bookMark = BookMark.builder()
+                    .station(station)
+                    .user(user)
+                    .build();
+
+            bookMarkRepository.save(bookMark);
+        }
     }
-
-
-    //북마크 조회
-    public Long getBookMarkList(Long userId) {
-        return userId; //return new StationInfoPageResponse(publicApiService.getRealTimeInfoForStationInfoPage(stationName, lineId), 0);
-    }
-
 }
-
-
-
-
-
-    //requestbody 어노테이션 사용 시
-    //북마크 추가
-    /* public void insert(BookMarkRequest bookMarkRequest) throws Exception {
-
-        User user = userRepository.findById(bookMarkRequest.getUserId())
-                .orElseThrow(() -> new ChangeSetPersister.NotFoundException());
-
-        Station station = stationRepository.findById(bookMarkRequest.getStationId())
-                .orElseThrow(() -> new ChangeSetPersister.NotFoundException());
-
-        //if (bookMarkRepository.findByUserAndStation(user, station).isPresent()){
-            //이미 북마크 되어있으면 북마크 취소
-        //}
-
-        BookMark bookMark = BookMark.builder()
-                .station(station)
-                .user(user)
-                .build();
-
-        bookMarkRepository.save(bookMark);
-    }*/
-
-
-    //북마크 해제
-    /*public void delete(BookMarkRequest bookMarkRequest) throws ChangeSetPersister.NotFoundException {
-
-        User user = userRepository.findById(bookMarkRequest.getUserId())
-                .orElseThrow(() -> new ChangeSetPersister.NotFoundException());
-
-        Station station= stationRepository.findById(bookMarkRequest.getStationId())
-                .orElseThrow(() -> new ChangeSetPersister.NotFoundException());
-
-        BookMark bookMark = bookMarkRepository.findByUserAndStation(user, station)
-                .orElseThrow(() -> new ChangeSetPersister.NotFoundException());
-
-        bookMarkRepository.delete(bookMark);
-    }*/
