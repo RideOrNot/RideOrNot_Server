@@ -15,8 +15,13 @@ public class RedisUtil {
         return Integer.parseInt(stringValueOperations.get(stationName + "/" + lineId));
     }
 
-    public Double getDistanceByStationNameAndExitName(Integer stationId, String exitName) {
+    public Double getDistanceByStationIdAndExitName(Integer stationId, String exitName) {
         ValueOperations<String, String> stringValueOperations = stringRedisTemplate.opsForValue();
         return Double.parseDouble(stringValueOperations.get(stationId + "/" + exitName));
+    }
+
+    public void putDistance(Integer stationId, String exitName, Double distance) {
+        ValueOperations<String, String> stringValueOperations = stringRedisTemplate.opsForValue();
+        stringValueOperations.set(stationId + "/" + exitName, String.valueOf(distance));
     }
 }

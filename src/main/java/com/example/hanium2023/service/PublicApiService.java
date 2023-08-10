@@ -14,8 +14,6 @@ import lombok.RequiredArgsConstructor;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
@@ -26,11 +24,13 @@ import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.util.List;
-
-import java.time.LocalDateTime;
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -42,16 +42,39 @@ public class PublicApiService {
     private final UserRepository userRepository;
     private final RedisUtil redisUtil;
 
+    public List<ArrivalInfoStationInfoPageResponse> getArrivalInfo(String stationName) {
+        JSONObject apiResultJsonObject = getApiResult(buildRealTimeApiUrl(stationName));
+        Optional<JSONArray> jsonArray = Optional.ofNullable((JSONArray) apiResultJsonObject.get("realtimeArrivalList"));
+        List<ArrivalInfoApiResult> arrivalInfoApiResultList = new ArrayList<>();
+
+        if (jsonArray.isPresent()) {
+            arrivalInfoApiResultList = jsonUtil.convertJsonArrayToDtoList(jsonArray.get(), ArrivalInfoApiResult.class)
+                    .stream()
+                    .map(this::correctArrivalTime)
+                    .filter(this::removeExpiredArrivalInfo)
+                    .sorted(Comparator.comparing(ArrivalInfoApiResult::getLineId))
+                    .collect(Collectors.toList());
+        }
+
+        return arrivalInfoApiResultList
+                .stream()
+                .map(ArrivalInfoStationInfoPageResponse::new)
+                .collect(Collectors.toList());
+    }
+
     public List<ArrivalInfoStationInfoPageResponse> getRealTimeInfoForStationInfoPage(String stationName, String lineId) {
         JSONObject apiResultJsonObject = getApiResult(buildRealTimeApiUrl(stationName));
-        JSONArray jsonArray = (JSONArray) apiResultJsonObject.get("realtimeArrivalList");
+        Optional<JSONArray> jsonArray = Optional.ofNullable((JSONArray) apiResultJsonObject.get("realtimeArrivalList"));
+        List<ArrivalInfoApiResult> arrivalInfoApiResultList = new ArrayList<>();
 
-        List<ArrivalInfoApiResult> arrivalInfoApiResultList = jsonUtil.convertJsonArrayToDtoList(jsonArray, ArrivalInfoApiResult.class)
-                .stream()
-                .map(this::correctArrivalTime)
-                .filter(this::removeExpiredArrivalInfo)
-                .filter(apiResult -> filterArrivalInfoByLineId(apiResult, lineId))
-                .collect(Collectors.toList());
+        if (jsonArray.isPresent()) {
+            arrivalInfoApiResultList = jsonUtil.convertJsonArrayToDtoList(jsonArray.get(), ArrivalInfoApiResult.class)
+                    .stream()
+                    .map(this::correctArrivalTime)
+                    .filter(this::removeExpiredArrivalInfo)
+                    .filter(apiResult -> filterArrivalInfoByLineId(apiResult, lineId))
+                    .collect(Collectors.toList());
+        }
 
         return arrivalInfoApiResultList
                 .stream()
@@ -62,16 +85,19 @@ public class PublicApiService {
 
     public PushAlarmResponse getRealTimeInfoForPushAlarm(String stationName, String exitName) {
         JSONObject apiResultJsonObject = getApiResult(buildRealTimeApiUrl(stationName));
-        JSONArray jsonArray = (JSONArray) apiResultJsonObject.get("realtimeArrivalList");
+        Optional<JSONArray> jsonArray = Optional.ofNullable((JSONArray) apiResultJsonObject.get("realtimeArrivalList"));
+        List<ArrivalInfoApiResult> arrivalInfoApiResultList = new ArrayList<>();
+
+        if (jsonArray.isPresent()){
+            arrivalInfoApiResultList = jsonUtil.convertJsonArrayToDtoList(jsonArray.get(), ArrivalInfoApiResult.class)
+                    .stream()
+                    .filter(this::removeTooFarArrivalInfo)
+                    .map(this::correctArrivalTime)
+                    .filter(this::removeInvalidArrivalInfo)
+                    .collect(Collectors.toList());
+        }
 
         UserDto userDto = new UserDto(userRepository.findById(1L).get());
-
-        List<ArrivalInfoApiResult> arrivalInfoApiResultList = jsonUtil.convertJsonArrayToDtoList(jsonArray, ArrivalInfoApiResult.class)
-                .stream()
-                .filter(this::removeTooFarArrivalInfo)
-                .map(this::correctArrivalTime)
-                .filter(this::removeInvalidArrivalInfo)
-                .collect(Collectors.toList());
 
         return new PushAlarmResponse(arrivalInfoApiResultList
                 .stream()
@@ -82,7 +108,7 @@ public class PublicApiService {
 
     private ArrivalInfoPushAlarmResponse calculateMovingTime(ArrivalInfoPushAlarmResponse arrivalInfoPushAlarmResponse, String stationName, String exitName, UserDto userDto) {
         Integer stationId = redisUtil.getStationIdByStationNameAndLineId(stationName, Integer.valueOf(arrivalInfoPushAlarmResponse.getLineId()));
-        double distance = redisUtil.getDistanceByStationNameAndExitName(stationId, exitName);
+        double distance = redisUtil.getDistanceByStationIdAndExitName(stationId, exitName);
 
         double userWalkingSpeed = userDto.getWalkingSpeed();
         double userRunningSpeed = userDto.getRunningSpeed();
