@@ -32,6 +32,7 @@ public class Station {
     private String beforeStation2;
     private Integer nextStationId2;
     private String nextStation2;
+    private String SKStationCode;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "line_id", nullable = false)
@@ -39,6 +40,10 @@ public class Station {
 
     @OneToMany(mappedBy = "station", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private List<StationExit> stationExits  = new ArrayList<>();
+
+    public void updateSKStationCode(String code){
+        this.SKStationCode = code;
+    }
 
 
 }
