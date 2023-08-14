@@ -96,7 +96,7 @@ public class PublicApiService {
 
     }
 
-    public PushAlarmResponse getRealTimeInfoForPushAlarm(String stationName, String exitName) {
+    public List<ArrivalInfoPushAlarmResponse> getRealTimeInfoForPushAlarm(String stationName, String exitName) {
         JSONObject apiResultJsonObject = getApiResult(buildRealTimeApiUrl(stationName));
         Optional<JSONArray> jsonArray = Optional.ofNullable((JSONArray) apiResultJsonObject.get("realtimeArrivalList"));
         List<ArrivalInfoApiResult> arrivalInfoApiResultList = new ArrayList<>();
@@ -112,11 +112,11 @@ public class PublicApiService {
 
         UserDto userDto = new UserDto(userRepository.findById(1L).get());
 
-        return new PushAlarmResponse(arrivalInfoApiResultList
+        return arrivalInfoApiResultList
                 .stream()
                 .map(ArrivalInfoPushAlarmResponse::new)
                 .map(apiResult -> calculateMovingTime(apiResult, stationName, exitName, userDto))
-                .collect(Collectors.toList()));
+                .collect(Collectors.toList());
     }
 
     private ArrivalInfoPushAlarmResponse calculateMovingTime(ArrivalInfoPushAlarmResponse arrivalInfoPushAlarmResponse, String stationName, String exitName, UserDto userDto) {

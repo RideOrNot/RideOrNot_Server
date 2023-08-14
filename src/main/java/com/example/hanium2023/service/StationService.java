@@ -1,6 +1,7 @@
 package com.example.hanium2023.service;
 
 import com.example.hanium2023.domain.dto.station.ArrivalInfoResponse;
+import com.example.hanium2023.domain.dto.station.PushAlarmResponse;
 import com.example.hanium2023.domain.dto.station.StationInfoPageResponse;
 import com.example.hanium2023.domain.entity.Line;
 import com.example.hanium2023.domain.entity.Station;
@@ -33,6 +34,10 @@ public class StationService {
     private final StationRepository stationRepository;
     private final LineRepository lineRepository;
     private final PublicApiService publicApiService;
+
+    public PushAlarmResponse getPushAlarm(String stationName, String exitName) {
+        return new PushAlarmResponse(publicApiService.getRealTimeInfoForPushAlarm(stationName, exitName));
+    }
 
     public StationInfoPageResponse getStationInfo(String stationName, String lineId) {
         return new StationInfoPageResponse(publicApiService.getRealTimeInfoForStationInfoPage(stationName, lineId), CongestionEnum.NORMAL.getMessage());
@@ -112,6 +117,7 @@ public class StationService {
             stationRepository.save(station);
         }
     }
+
     public void insertRelatedStation() throws IOException, InterruptedException {
         CsvParsing festivalCSVParsing = new CsvParsing("file path");
         String[] line = null;
@@ -122,7 +128,7 @@ public class StationService {
                 continue;
             }
             Optional<Station> existedStation = stationRepository.findById(Integer.valueOf(line[0]));
-            if(existedStation.isEmpty()) continue;
+            if (existedStation.isEmpty()) continue;
             Station updatedStation = Station.builder()
                     .statnName(existedStation.get().getStatnName())
                     .stationId(existedStation.get().getStationId())

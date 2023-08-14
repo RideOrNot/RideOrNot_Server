@@ -14,11 +14,9 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/stations")
 public class StationController {
     private final StationService stationService;
-    private final PublicApiService publicApiService;
-
     @GetMapping("/pushAlarm")
     public Response<PushAlarmResponse> getRealTimeInfoForPushAlarm(@RequestParam String stationName, @RequestParam String exitName) {
-        return Response.success(publicApiService.getRealTimeInfoForPushAlarm(stationName, exitName));
+        return Response.success(stationService.getPushAlarm(stationName, exitName));
     }
 
     @GetMapping("/{stationName}/{lineId}")
