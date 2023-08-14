@@ -13,6 +13,7 @@ import java.util.Locale;
 public class PushAlarmResponse {
     List<ArrivalInfoPushAlarmResponse> arrivalInfo;
     String currentTime;
+    String congestion;
 
     public PushAlarmResponse(List<ArrivalInfoPushAlarmResponse> arrivalInfo) {
         this.arrivalInfo = arrivalInfo;
