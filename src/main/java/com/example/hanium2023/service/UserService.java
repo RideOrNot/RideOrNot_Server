@@ -1,7 +1,6 @@
 package com.example.hanium2023.service;
 
 import com.example.hanium2023.domain.dto.user.UserAutoFeedBackResponse;
-import com.example.hanium2023.domain.dto.user.UserDto;
 import com.example.hanium2023.domain.dto.user.UserAutoFeedbackRequest;
 import com.example.hanium2023.domain.entity.BoardingHistory;
 import com.example.hanium2023.domain.entity.StationExit;
@@ -11,8 +10,6 @@ import com.example.hanium2023.repository.StationExitRepository;
 import com.example.hanium2023.repository.UserRepository;
 import com.example.hanium2023.util.RedisUtil;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,26 +41,19 @@ public class UserService {
     }
 
     private void updateUserMovingSpeed(UserAutoFeedbackRequest userAutoFeedbackRequest, User user) {
-        double alpha = 0.2;
-        double beta = 0.35;
+        boolean isWalking = isWalking(userAutoFeedbackRequest);
+        double weight = isWalking ? 0.2 : 0.35;
+        double multiplier = userAutoFeedbackRequest.isBoarded() ? 0.8 : 1.2;
+        double newMovingSpeed = calculateNewMovingSpeed(user, weight, multiplier, isWalking);
 
-        double newMovingSpeed;
-
-        if (1 <= userAutoFeedbackRequest.getMovingSpeedStep() && userAutoFeedbackRequest.getMovingSpeedStep() <= 3) {
-            if (userAutoFeedbackRequest.isBoarded()) {
-                newMovingSpeed = calculateNewMovingSpeed(user.getWalkingSpeed(), user.getInitialWalkingSpeed(), alpha, 0.8);
-            } else {
-                newMovingSpeed = calculateNewMovingSpeed(user.getWalkingSpeed(), user.getInitialWalkingSpeed(), beta, 1.2);
-            }
+        if(isWalking)
             user.updateWalkingSpeed(newMovingSpeed);
-        } else {
-            if (userAutoFeedbackRequest.isBoarded()) {
-                newMovingSpeed = calculateNewMovingSpeed(user.getRunningSpeed(), user.getInitialRunningSpeed(), alpha, 0.8);
-            } else {
-                newMovingSpeed = calculateNewMovingSpeed(user.getRunningSpeed(), user.getInitialRunningSpeed(), beta, 1.2);
-            }
+        else
             user.updateRunningSpeed(newMovingSpeed);
-        }
+    }
+
+    private boolean isWalking(UserAutoFeedbackRequest userAutoFeedbackRequest) {
+        return 1 <= userAutoFeedbackRequest.getMovingSpeedStep() && userAutoFeedbackRequest.getMovingSpeedStep() <= 3;
     }
 
     private Long saveBoardingHistory(UserAutoFeedbackRequest userAutoFeedbackRequest, User user) {
@@ -73,11 +63,10 @@ public class UserService {
         return savedBoardingHistory.getBoardingHistoryId();
     }
 
-    private double calculateNewMovingSpeed(double currentSpeed, double initialSpeed, double weight, double multiplier) {
-        double newMovingSpeed = (1 - weight) * currentSpeed + weight * initialSpeed * multiplier;
-        DecimalFormat decimalFormat = new DecimalFormat("#.#####");
-        String formattedValue = decimalFormat.format(newMovingSpeed);
-        return Double.parseDouble(formattedValue);
+    private double calculateNewMovingSpeed(User user, double weight, double multiplier, boolean isWalking) {
+        double currentSpeed = isWalking ? user.getWalkingSpeed() : user.getRunningSpeed();
+        double initialSpeed = isWalking ? user.getInitialWalkingSpeed() : user.getInitialRunningSpeed();
+        return Double.parseDouble(String.format("%.5f", (1 - weight) * currentSpeed + weight * initialSpeed * multiplier));
     }
 
     private double getDeviationPercentageByUser(User user) {
