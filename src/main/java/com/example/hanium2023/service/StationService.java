@@ -5,12 +5,14 @@ import com.example.hanium2023.domain.dto.station.StationInfoPageResponse;
 import com.example.hanium2023.domain.entity.Line;
 import com.example.hanium2023.domain.entity.Station;
 import com.example.hanium2023.domain.entity.StationExit;
+import com.example.hanium2023.enums.CongestionEnum;
 import com.example.hanium2023.repository.LineRepository;
 import com.example.hanium2023.repository.StationExitRepository;
 import com.example.hanium2023.repository.StationRepository;
 import com.example.hanium2023.util.CsvParsing;
 import com.example.hanium2023.util.KatecToLatLong;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
@@ -33,7 +35,7 @@ public class StationService {
     private final PublicApiService publicApiService;
 
     public StationInfoPageResponse getStationInfo(String stationName, String lineId) {
-        return new StationInfoPageResponse(publicApiService.getRealTimeInfoForStationInfoPage(stationName, lineId), 0);
+        return new StationInfoPageResponse(publicApiService.getRealTimeInfoForStationInfoPage(stationName, lineId), CongestionEnum.NORMAL.getMessage());
     }
 
     public ArrivalInfoResponse getStationArrivalInfo(String stationName) {
@@ -95,7 +97,7 @@ public class StationService {
                 lineCount++;
                 continue;
             }
-            LinkedHashMap<String, String> latLon = KatecToLatLong.getLatLon(line[4], line[3]);
+            LinkedHashMap<String, String> latLon = KatecToLatLong.getLatLon(key, line[4], line[3]);
             System.out.println(line[0]);
             System.out.println(line[1]);
             Optional<Line> stationLine = lineRepository.findByCsvLine(Integer.valueOf(line[0]) / 100);
