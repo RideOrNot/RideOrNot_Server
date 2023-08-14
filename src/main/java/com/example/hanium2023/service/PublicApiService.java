@@ -7,7 +7,6 @@ import com.example.hanium2023.domain.dto.congestion.AvailableStationInfoApiResul
 import com.example.hanium2023.domain.dto.congestion.CongestionResponse;
 import com.example.hanium2023.domain.dto.congestion.PassengerByTimeResult;
 import com.example.hanium2023.domain.dto.congestion.PassengerPerDayResult;
-import com.example.hanium2023.domain.dto.station.PushAlarmResponse;
 import com.example.hanium2023.domain.dto.user.UserDto;
 import com.example.hanium2023.domain.entity.Line;
 import com.example.hanium2023.domain.entity.Station;
@@ -39,6 +38,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Service
@@ -56,59 +56,31 @@ public class PublicApiService {
     private final int avgPassenger = 23058;
 
     public List<ArrivalInfoStationInfoPageResponse> getArrivalInfo(String stationName) {
-        JSONObject apiResultJsonObject = getApiResult(buildRealTimeApiUrl(stationName));
-        Optional<JSONArray> jsonArray = Optional.ofNullable((JSONArray) apiResultJsonObject.get("realtimeArrivalList"));
-        List<ArrivalInfoApiResult> arrivalInfoApiResultList = new ArrayList<>();
-
-        if (jsonArray.isPresent()) {
-            arrivalInfoApiResultList = jsonUtil.convertJsonArrayToDtoList(jsonArray.get(), ArrivalInfoApiResult.class)
-                    .stream()
-                    .map(this::correctArrivalTime)
-                    .filter(this::removeExpiredArrivalInfo)
-                    .sorted(Comparator.comparing(ArrivalInfoApiResult::getLineId))
-                    .collect(Collectors.toList());
-        }
+        Predicate<ArrivalInfoApiResult> arrivalInfoFilter = this::removeExpiredArrivalInfo;
+        List<ArrivalInfoApiResult> arrivalInfoApiResultList = getArrivalInfoFromPublicApi(stationName, arrivalInfoFilter);
 
         return arrivalInfoApiResultList
                 .stream()
+                .sorted(Comparator.comparing(ArrivalInfoApiResult::getLineId))
                 .map(ArrivalInfoStationInfoPageResponse::new)
                 .collect(Collectors.toList());
     }
 
     public List<ArrivalInfoStationInfoPageResponse> getRealTimeInfoForStationInfoPage(String stationName, String lineId) {
-        JSONObject apiResultJsonObject = getApiResult(buildRealTimeApiUrl(stationName));
-        Optional<JSONArray> jsonArray = Optional.ofNullable((JSONArray) apiResultJsonObject.get("realtimeArrivalList"));
-        List<ArrivalInfoApiResult> arrivalInfoApiResultList = new ArrayList<>();
-
-        if (jsonArray.isPresent()) {
-            arrivalInfoApiResultList = jsonUtil.convertJsonArrayToDtoList(jsonArray.get(), ArrivalInfoApiResult.class)
-                    .stream()
-                    .map(this::correctArrivalTime)
-                    .filter(this::removeExpiredArrivalInfo)
-                    .filter(apiResult -> filterArrivalInfoByLineId(apiResult, lineId))
-                    .collect(Collectors.toList());
-        }
+        Predicate<ArrivalInfoApiResult> removeExpiredArrivalInfoFilter = this::removeExpiredArrivalInfo;
+        Predicate<ArrivalInfoApiResult> arrivalInfoFilter = removeExpiredArrivalInfoFilter.and(apiResult -> filterArrivalInfoByLineId(apiResult, lineId));
+        List<ArrivalInfoApiResult> arrivalInfoApiResultList = getArrivalInfoFromPublicApi(stationName, arrivalInfoFilter);
 
         return arrivalInfoApiResultList
                 .stream()
                 .map(ArrivalInfoStationInfoPageResponse::new)
                 .collect(Collectors.toList());
-
     }
 
     public List<ArrivalInfoPushAlarmResponse> getRealTimeInfoForPushAlarm(String stationName, String exitName) {
-        JSONObject apiResultJsonObject = getApiResult(buildRealTimeApiUrl(stationName));
-        Optional<JSONArray> jsonArray = Optional.ofNullable((JSONArray) apiResultJsonObject.get("realtimeArrivalList"));
-        List<ArrivalInfoApiResult> arrivalInfoApiResultList = new ArrayList<>();
-
-        if (jsonArray.isPresent()){
-            arrivalInfoApiResultList = jsonUtil.convertJsonArrayToDtoList(jsonArray.get(), ArrivalInfoApiResult.class)
-                    .stream()
-                    .filter(this::removeTooFarArrivalInfo)
-                    .map(this::correctArrivalTime)
-                    .filter(this::removeInvalidArrivalInfo)
-                    .collect(Collectors.toList());
-        }
+        Predicate<ArrivalInfoApiResult> removeTooFarArrivalInfoFilter = this::removeTooFarArrivalInfo;
+        Predicate<ArrivalInfoApiResult> arrivalInfoFilter = removeTooFarArrivalInfoFilter.and(this::removeInvalidArrivalInfo);
+        List<ArrivalInfoApiResult> arrivalInfoApiResultList = getArrivalInfoFromPublicApi(stationName, arrivalInfoFilter);
 
         UserDto userDto = new UserDto(userRepository.findById(1L).get());
 
@@ -117,6 +89,22 @@ public class PublicApiService {
                 .map(ArrivalInfoPushAlarmResponse::new)
                 .map(apiResult -> calculateMovingTime(apiResult, stationName, exitName, userDto))
                 .collect(Collectors.toList());
+    }
+
+    private List<ArrivalInfoApiResult> getArrivalInfoFromPublicApi(String stationName, Predicate<ArrivalInfoApiResult> filterPredicate) {
+        JSONObject apiResultJsonObject = getApiResult(buildRealTimeApiUrl(stationName));
+        Optional<JSONArray> jsonArray = Optional.ofNullable((JSONArray) apiResultJsonObject.get("realtimeArrivalList"));
+        List<ArrivalInfoApiResult> arrivalInfoApiResultList = new ArrayList<>();
+
+        if (jsonArray.isPresent()) {
+            arrivalInfoApiResultList = jsonUtil.convertJsonArrayToDtoList(jsonArray.get(), ArrivalInfoApiResult.class)
+                    .stream()
+                    .map(this::correctArrivalTime)
+                    .filter(this::removeExpiredArrivalInfo)
+                    .filter(filterPredicate)
+                    .collect(Collectors.toList());
+        }
+        return arrivalInfoApiResultList;
     }
 
     private ArrivalInfoPushAlarmResponse calculateMovingTime(ArrivalInfoPushAlarmResponse arrivalInfoPushAlarmResponse, String stationName, String exitName, UserDto userDto) {
@@ -230,15 +218,15 @@ public class PublicApiService {
         }
         for (AvailableStationInfoApiResult availableStationInfoApiResult : result) {
             Optional<Line> line = lineRepository.findByLineNameContains(
-                    availableStationInfoApiResult.getSubwayLine().substring(0,2)
+                    availableStationInfoApiResult.getSubwayLine().substring(0, 2)
             );
-            if(line.isEmpty()) continue;
+            if (line.isEmpty()) continue;
             List<Station> stations = stationRepository
                     .findAllByStatnNameAndLine(
                             availableStationInfoApiResult
                                     .getStationName()
-                                    .substring(0,availableStationInfoApiResult.getStationName().length()-1), line.get());
-            if(stations.isEmpty()) continue;
+                                    .substring(0, availableStationInfoApiResult.getStationName().length() - 1), line.get());
+            if (stations.isEmpty()) continue;
             for (Station station : stations) {
                 station.updateSKStationCode(availableStationInfoApiResult.getStationCode());
                 stationRepository.save(station);
@@ -253,9 +241,9 @@ public class PublicApiService {
                 .congestionMessage(CongestionEnum.NULL.getMessage())
                 .build();
         Optional<Station> station = stationRepository.findByStatnNameAndSKStationCodeIsNotNull(stationName);
-        if(station.isEmpty()) return response;
+        if (station.isEmpty()) return response;
         Calendar currentCalendar = Calendar.getInstance();
-        currentCalendar.add(currentCalendar.DATE,-7);
+        currentCalendar.add(currentCalendar.DATE, -7);
         JSONObject passengerPerDay = SKApiUtil.getPassengerPerDayApiResult(
                 skKey,
                 station.get().getSKStationCode(),
@@ -263,7 +251,7 @@ public class PublicApiService {
                         .getDayOfWeek()
                         .toString()
                         .toUpperCase()
-                        .substring(0,3));
+                        .substring(0, 3));
         JSONObject passengerByTime = SKApiUtil.getPassengerByTimeApiResult(
                 skKey,
                 station.get().getSKStationCode(),
@@ -283,29 +271,29 @@ public class PublicApiService {
         int totalUser = 0;
         int nowUser = 0;
         for (PassengerPerDayResult result : passengerPerDayResult) {
-            if(result.getExit().equals(exitName)) nowUser = result.getUserCount();
-            totalUser+=result.getUserCount();
+            if (result.getExit().equals(exitName)) nowUser = result.getUserCount();
+            totalUser += result.getUserCount();
         }
-        double stationWeight = (double) totalUser/12/avgPassenger;
-        double exitWeight = (double)nowUser/(double)totalUser*100;
+        double stationWeight = (double) totalUser / 12 / avgPassenger;
+        double exitWeight = (double) nowUser / (double) totalUser * 100;
         totalUser = 0;
         nowUser = 0;
         for (PassengerByTimeResult result : passengerByTimeResult) {
-            if(result.getExit().equals(exitName)) {
-                totalUser+=result.getUserCount();
-                if(result.getDatetime().substring(8,10).equals(LocalDateTime.now().format(DateTimeFormatter.ofPattern("hh")))){
+            if (result.getExit().equals(exitName)) {
+                totalUser += result.getUserCount();
+                if (result.getDatetime().substring(8, 10).equals(LocalDateTime.now().format(DateTimeFormatter.ofPattern("hh")))) {
                     nowUser = result.getUserCount();
                 }
             }
 
         }
-        double timeWeight = (double) nowUser/totalUser * 100;
-        double congestion = stationWeight*exitWeight*timeWeight;
-        if(congestion<20)
-            response.setCongestionMessage(defaultCongestionMessage+CongestionEnum.LOW.getMessage());
-        else if(congestion<40)
-            response.setCongestionMessage(defaultCongestionMessage+CongestionEnum.NORMAL.getMessage());
-        else response.setCongestionMessage(defaultCongestionMessage+CongestionEnum.HIGH.getMessage());
+        double timeWeight = (double) nowUser / totalUser * 100;
+        double congestion = stationWeight * exitWeight * timeWeight;
+        if (congestion < 20)
+            response.setCongestionMessage(defaultCongestionMessage + CongestionEnum.LOW.getMessage());
+        else if (congestion < 40)
+            response.setCongestionMessage(defaultCongestionMessage + CongestionEnum.NORMAL.getMessage());
+        else response.setCongestionMessage(defaultCongestionMessage + CongestionEnum.HIGH.getMessage());
         return response;
     }
 
@@ -315,9 +303,9 @@ public class PublicApiService {
                 .congestionMessage(CongestionEnum.NULL.getMessage())
                 .build();
         Optional<Station> station = stationRepository.findByStatnNameAndSKStationCodeIsNotNull(stationName);
-        if(station.isEmpty()) return response;
+        if (station.isEmpty()) return response;
         Calendar currentCalendar = Calendar.getInstance();
-        currentCalendar.add(currentCalendar.DATE,-7);
+        currentCalendar.add(currentCalendar.DATE, -7);
         JSONObject passengerPerDay = SKApiUtil.getPassengerPerDayApiResult(
                 skKey,
                 station.get().getSKStationCode(),
@@ -325,7 +313,7 @@ public class PublicApiService {
                         .getDayOfWeek()
                         .toString()
                         .toUpperCase()
-                        .substring(0,3));
+                        .substring(0, 3));
         JSONObject passengerByTime = SKApiUtil.getPassengerByTimeApiResult(
                 skKey,
                 station.get().getSKStationCode(),
@@ -344,26 +332,26 @@ public class PublicApiService {
         }
         int totalUser = 0;
         for (PassengerPerDayResult result : passengerPerDayResult) {
-            if(result==null) continue;
-            totalUser+=result.getUserCount();
+            if (result == null) continue;
+            totalUser += result.getUserCount();
         }
-        double stationWeight = (double) totalUser/12/avgPassenger;
+        double stationWeight = (double) totalUser / 12 / avgPassenger;
         totalUser = 0;
         int nowUser = 0;
         for (PassengerByTimeResult result : passengerByTimeResult) {
-            if(result==null) continue;
-            totalUser+=result.getUserCount();
-            if(result.getDatetime().substring(8,10).equals(LocalDateTime.now().format(DateTimeFormatter.ofPattern("hh")))){
+            if (result == null) continue;
+            totalUser += result.getUserCount();
+            if (result.getDatetime().substring(8, 10).equals(LocalDateTime.now().format(DateTimeFormatter.ofPattern("hh")))) {
                 nowUser += result.getUserCount();
             }
         }
-        double timeWeight = (double) nowUser/totalUser * 100;
-        double congestion = stationWeight*timeWeight;
-        if(congestion<20)
-            response.setCongestionMessage(defaultCongestionMessage+CongestionEnum.LOW.getMessage());
-        else if(congestion<40)
-            response.setCongestionMessage(defaultCongestionMessage+CongestionEnum.NORMAL.getMessage());
-        else response.setCongestionMessage(defaultCongestionMessage+CongestionEnum.HIGH.getMessage());
+        double timeWeight = (double) nowUser / totalUser * 100;
+        double congestion = stationWeight * timeWeight;
+        if (congestion < 20)
+            response.setCongestionMessage(defaultCongestionMessage + CongestionEnum.LOW.getMessage());
+        else if (congestion < 40)
+            response.setCongestionMessage(defaultCongestionMessage + CongestionEnum.NORMAL.getMessage());
+        else response.setCongestionMessage(defaultCongestionMessage + CongestionEnum.HIGH.getMessage());
         return response;
     }
 }
