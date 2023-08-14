@@ -7,6 +7,7 @@ import com.example.hanium2023.domain.dto.congestion.AvailableStationInfoApiResul
 import com.example.hanium2023.domain.dto.congestion.CongestionResponse;
 import com.example.hanium2023.domain.dto.congestion.PassengerByTimeResult;
 import com.example.hanium2023.domain.dto.congestion.PassengerPerDayResult;
+import com.example.hanium2023.domain.dto.user.MovingSpeedInfo;
 import com.example.hanium2023.domain.dto.user.UserDto;
 import com.example.hanium2023.domain.entity.Line;
 import com.example.hanium2023.domain.entity.Station;
@@ -110,43 +111,46 @@ public class PublicApiService {
     private ArrivalInfoPushAlarmResponse calculateMovingTime(ArrivalInfoPushAlarmResponse arrivalInfoPushAlarmResponse, String stationName, String exitName, UserDto userDto) {
         Integer stationId = redisUtil.getStationIdByStationNameAndLineId(stationName, Integer.valueOf(arrivalInfoPushAlarmResponse.getLineId()));
         double distance = redisUtil.getDistanceByStationIdAndExitName(stationId, exitName);
-
-        double userWalkingSpeed = userDto.getWalkingSpeed();
-        double userRunningSpeed = userDto.getRunningSpeed();
-
-        // 최대 이동 속도를 구함 ( m/s 단위)
-        // 최소 movingSpeed보다 빠르게 이동해야 탈 수 있음
         double minMovingSpeed = distance / (double) arrivalInfoPushAlarmResponse.getArrivalTime();
-        Pair<MovingMessageEnum, Double> movingSpeedInfo = getMovingSpeedInfo(userWalkingSpeed, userRunningSpeed, minMovingSpeed);
 
-        long movingTime = (long) (distance / movingSpeedInfo.getSecond());
-        arrivalInfoPushAlarmResponse.setMovingTime(movingTime > 0 ? movingTime : 0);
+        MovingSpeedInfo movingSpeedInfo = getMovingSpeedInfo(userDto, minMovingSpeed);
 
-        if (movingSpeedInfo.getSecond() == -1)
-            arrivalInfoPushAlarmResponse.setMessage(movingSpeedInfo.getFirst().getMessage());
+        long movingTime = (long) (distance / movingSpeedInfo.getMovingSpeed());
+
+        if (movingSpeedInfo.getMovingSpeed() == -1.0)
+            arrivalInfoPushAlarmResponse.setMessage(movingSpeedInfo.getMovingMessageEnum().getMessage());
         else
-            arrivalInfoPushAlarmResponse.setMessage(movingTime + "초 동안 " + movingSpeedInfo.getFirst().getMessage());
+            arrivalInfoPushAlarmResponse.setMessage(movingTime + "초 동안 " + movingSpeedInfo.getMovingMessageEnum().getMessage());
 
-        arrivalInfoPushAlarmResponse.setMovingSpeedStep(movingSpeedInfo.getFirst().getMovingSpeedStep());
-        arrivalInfoPushAlarmResponse.setMovingSpeed(movingSpeedInfo.getSecond());
+        arrivalInfoPushAlarmResponse.setMovingTime(movingTime > 0 ? movingTime : 0);
+        arrivalInfoPushAlarmResponse.setMovingSpeedStep(movingSpeedInfo.getMovingMessageEnum().getMovingSpeedStep());
+        arrivalInfoPushAlarmResponse.setMovingSpeed(movingSpeedInfo.getMovingSpeed());
+
         return arrivalInfoPushAlarmResponse;
     }
 
-    private Pair<MovingMessageEnum, Double> getMovingSpeedInfo(double walkingSpeed, double runningSpeed, double minMovingSpeed) {
-        if (minMovingSpeed <= walkingSpeed) {
-            return Pair.of(MovingMessageEnum.WALK_SLOWLY, walkingSpeed);
-        } else if (minMovingSpeed <= walkingSpeed * 1.2) {
-            return Pair.of(MovingMessageEnum.WALK, walkingSpeed * 1.2);
-        } else if (minMovingSpeed <= walkingSpeed * 1.5) {
-            return Pair.of(MovingMessageEnum.WALK_FAST, walkingSpeed * 1.5);
-        } else if (minMovingSpeed <= runningSpeed * 0.5) {
-            return Pair.of(MovingMessageEnum.RUN_SLOWLY, runningSpeed * 0.5);
-        } else if (minMovingSpeed <= runningSpeed) {
-            return Pair.of(MovingMessageEnum.RUN, runningSpeed);
-        } else if (minMovingSpeed <= runningSpeed * 1.2) {
-            return Pair.of(MovingMessageEnum.RUN_FAST, runningSpeed * 1.2);
-        } else
-            return Pair.of(MovingMessageEnum.CANNOT_BOARD, -1.0);
+    private MovingSpeedInfo getMovingSpeedInfo(UserDto userDto, double minMovingSpeed) {
+        MovingMessageEnum[] movingMessageEnums = MovingMessageEnum.getMovingMessageEnums();
+        double[] speedBoundary = getSpeedBoundary(userDto);
+
+        for (int i = 0; i < speedBoundary.length; i++) {
+            if (minMovingSpeed <= speedBoundary[i]) {
+                return new MovingSpeedInfo(movingMessageEnums[i], speedBoundary[i]);
+            }
+        }
+
+        return new MovingSpeedInfo(MovingMessageEnum.CANNOT_BOARD, -1.0);
+    }
+
+    private double[] getSpeedBoundary(UserDto userDto) {
+        return new double[] {
+                userDto.getWalkingSpeed(),
+                userDto.getWalkingSpeed() * 1.2,
+                userDto.getWalkingSpeed() * 1.5,
+                userDto.getRunningSpeed() * 0.5,
+                userDto.getRunningSpeed(),
+                userDto.getRunningSpeed() * 1.2
+        };
     }
 
     private ArrivalInfoApiResult correctArrivalTime(ArrivalInfoApiResult apiResult) {
@@ -156,7 +160,6 @@ public class PublicApiService {
         Duration timeGap = Duration.between(targetTime, currentTime);
         long correctedArrivalTime = apiResult.getArrivalTime() - timeGap.getSeconds();
 
-        // 음수면 요청 다시 보내게끔?
         apiResult.setArrivalTime(correctedArrivalTime > 0 ? correctedArrivalTime : 0);
         return apiResult;
     }
