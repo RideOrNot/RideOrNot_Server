@@ -24,6 +24,8 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 public class StationService {
+    @Value("${public-api-key.lat-lon-key}")
+    private String key;
     private final StringRedisTemplate stringRedisTemplate;
     private final StationExitRepository stationExitRepository;
     private final StationRepository stationRepository;
