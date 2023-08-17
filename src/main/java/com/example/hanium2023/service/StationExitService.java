@@ -7,6 +7,7 @@ import com.example.hanium2023.repository.StationRepository;
 import com.example.hanium2023.util.CsvParsing;
 import com.example.hanium2023.util.KatecToLatLong;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -17,6 +18,8 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 public class StationExitService {
+    @Value("${public-api-key.lat-lon-key}")
+    private String key;
     private final StationExitRepository stationExitRepository;
     private final StationRepository stationRepository;
     public void addExit() throws IOException, InterruptedException {
@@ -29,7 +32,7 @@ public class StationExitService {
                 lineCount++;
                 continue;
             }
-            LinkedHashMap<String, String> latLon = KatecToLatLong.getLatLon(line[3], line[2]);
+            LinkedHashMap<String, String> latLon = KatecToLatLong.getLatLon(key, line[3], line[2]);
             System.out.println(line[0]);
             System.out.println(line[1]);
             Optional<Station> station = stationRepository.findById(Integer.valueOf(line[0]));

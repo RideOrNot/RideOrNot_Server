@@ -14,11 +14,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class KatecToLatLong {
-    @Value("${public-api-key.lat-lon-key}")
-    private String latLonKey;
 
-
-    public HttpRequest makeUri(String lat, String lon){
+    public HttpRequest makeUri(String key, String lat, String lon){
         StringBuilder uri = new StringBuilder();
         uri.append("https://apis.openapi.sk.com/tmap/geo/coordconvert?version=1&")
                 .append("lat=")
@@ -30,14 +27,14 @@ public class KatecToLatLong {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(uri.toString()))
                 .header("accept", "application/json")
-                .header("appKey", this.latLonKey )
+                .header("appKey", key)
                 .method("GET", HttpRequest.BodyPublishers.noBody())
                 .build();
         return request;
     }
-    public static LinkedHashMap<String,String> getLatLon(String lat, String lon) throws IOException, InterruptedException {
+    public static LinkedHashMap<String,String> getLatLon(String key, String lat, String lon) throws IOException, InterruptedException {
         //response(json)을 map으로 변경
-        HttpResponse<String> response = HttpClient.newHttpClient().send(new KatecToLatLong().makeUri(lat,lon), HttpResponse.BodyHandlers.ofString());
+        HttpResponse<String> response = HttpClient.newHttpClient().send(new KatecToLatLong().makeUri(key, lat,lon), HttpResponse.BodyHandlers.ofString());
         Map<String,Object> bodyCoordinate = null;
         bodyCoordinate = new ObjectMapper().readValue(response.body(), Map.class) ;
 

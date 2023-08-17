@@ -1,16 +1,19 @@
 package com.example.hanium2023.service;
 
 import com.example.hanium2023.domain.dto.station.ArrivalInfoResponse;
+import com.example.hanium2023.domain.dto.station.PushAlarmResponse;
 import com.example.hanium2023.domain.dto.station.StationInfoPageResponse;
 import com.example.hanium2023.domain.entity.Line;
 import com.example.hanium2023.domain.entity.Station;
 import com.example.hanium2023.domain.entity.StationExit;
+import com.example.hanium2023.enums.CongestionEnum;
 import com.example.hanium2023.repository.LineRepository;
 import com.example.hanium2023.repository.StationExitRepository;
 import com.example.hanium2023.repository.StationRepository;
 import com.example.hanium2023.util.CsvParsing;
 import com.example.hanium2023.util.KatecToLatLong;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
@@ -24,14 +27,20 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 public class StationService {
+    @Value("${public-api-key.lat-lon-key}")
+    private String key;
     private final StringRedisTemplate stringRedisTemplate;
     private final StationExitRepository stationExitRepository;
     private final StationRepository stationRepository;
     private final LineRepository lineRepository;
     private final PublicApiService publicApiService;
 
+    public PushAlarmResponse getPushAlarm(String stationName, String exitName) {
+        return new PushAlarmResponse(publicApiService.getRealTimeInfoForPushAlarm(stationName, exitName));
+    }
+
     public StationInfoPageResponse getStationInfo(String stationName, String lineId) {
-        return new StationInfoPageResponse(publicApiService.getRealTimeInfoForStationInfoPage(stationName, lineId), 0);
+        return new StationInfoPageResponse(publicApiService.getRealTimeInfoForStationInfoPage(stationName, lineId), CongestionEnum.NORMAL.getMessage());
     }
 
     public ArrivalInfoResponse getStationArrivalInfo(String stationName) {
@@ -93,7 +102,7 @@ public class StationService {
                 lineCount++;
                 continue;
             }
-            LinkedHashMap<String, String> latLon = KatecToLatLong.getLatLon(line[4], line[3]);
+            LinkedHashMap<String, String> latLon = KatecToLatLong.getLatLon(key, line[4], line[3]);
             System.out.println(line[0]);
             System.out.println(line[1]);
             Optional<Line> stationLine = lineRepository.findByCsvLine(Integer.valueOf(line[0]) / 100);
@@ -106,6 +115,37 @@ public class StationService {
                     .line(stationLine.get())
                     .build();
             stationRepository.save(station);
+        }
+    }
+
+    public void insertRelatedStation() throws IOException, InterruptedException {
+        CsvParsing festivalCSVParsing = new CsvParsing("file path");
+        String[] line = null;
+        int lineCount = 0;
+        while ((line = festivalCSVParsing.nextRead()) != null) {
+            if (lineCount == 0) {
+                lineCount++;
+                continue;
+            }
+            Optional<Station> existedStation = stationRepository.findById(Integer.valueOf(line[0]));
+            if (existedStation.isEmpty()) continue;
+            Station updatedStation = Station.builder()
+                    .statnName(existedStation.get().getStatnName())
+                    .stationId(existedStation.get().getStationId())
+                    .statnLongitude(existedStation.get().getStatnLongitude())
+                    .statnLatitude(existedStation.get().getStatnLatitude())
+                    .beforeStationId1(Integer.valueOf((line[9])))
+                    .beforeStationId2(Integer.valueOf((line[11])))
+                    .nextStationId1(Integer.valueOf((line[5])))
+                    .nextStationId2(Integer.valueOf((line[7])))
+                    .nextStation1(line[6])
+                    .nextStation2(line[8])
+                    .beforeStation1(line[10])
+                    .beforeStation2(line[12])
+                    .line(existedStation.get().getLine())
+                    .stationExits(existedStation.get().getStationExits())
+                    .build();
+            stationRepository.save(updatedStation);
         }
     }
 }
