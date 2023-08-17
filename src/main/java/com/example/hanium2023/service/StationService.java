@@ -1,5 +1,6 @@
 package com.example.hanium2023.service;
 
+import com.example.hanium2023.domain.dto.congestion.CongestionResponse;
 import com.example.hanium2023.domain.dto.station.ArrivalInfoResponse;
 import com.example.hanium2023.domain.dto.station.PushAlarmResponse;
 import com.example.hanium2023.domain.dto.station.StationInfoPageResponse;
@@ -36,11 +37,14 @@ public class StationService {
     private final PublicApiService publicApiService;
 
     public PushAlarmResponse getPushAlarm(String stationName, String exitName) {
-        return new PushAlarmResponse(publicApiService.getRealTimeInfoForPushAlarm(stationName, exitName));
+        PushAlarmResponse response = new PushAlarmResponse(publicApiService.getRealTimeInfoForPushAlarm(stationName, exitName));
+        response.setCongestion(publicApiService.getCongestionForPushAlarm(stationName, exitName).getCongestionMessage());
+        return response;
     }
 
     public StationInfoPageResponse getStationInfo(String stationName, String lineId) {
-        return new StationInfoPageResponse(publicApiService.getRealTimeInfoForStationInfoPage(stationName, lineId), CongestionEnum.NORMAL.getMessage());
+        CongestionResponse congestionResponse = publicApiService.getCongestionForStationInfo(stationName);
+        return new StationInfoPageResponse(publicApiService.getRealTimeInfoForStationInfoPage(stationName, lineId), congestionResponse.getCongestionMessage());
     }
 
     public ArrivalInfoResponse getStationArrivalInfo(String stationName) {
