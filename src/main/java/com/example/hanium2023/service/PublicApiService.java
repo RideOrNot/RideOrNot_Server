@@ -14,6 +14,8 @@ import com.example.hanium2023.domain.entity.Station;
 import com.example.hanium2023.enums.ArrivalCodeEnum;
 import com.example.hanium2023.enums.CongestionEnum;
 import com.example.hanium2023.enums.MovingMessageEnum;
+import com.example.hanium2023.exception.AppException;
+import com.example.hanium2023.exception.ErrorCode;
 import com.example.hanium2023.repository.LineRepository;
 import com.example.hanium2023.repository.StationRepository;
 import com.example.hanium2023.repository.UserRepository;
@@ -143,7 +145,7 @@ public class PublicApiService {
     }
 
     private double[] getSpeedBoundary(UserDto userDto) {
-        return new double[] {
+        return new double[]{
                 userDto.getWalkingSpeed(),
                 userDto.getWalkingSpeed() * 1.2,
                 userDto.getWalkingSpeed() * 1.5,
@@ -238,123 +240,138 @@ public class PublicApiService {
         return result;
     }
 
-    public CongestionResponse getCongestionForPushAlarm(String stationName, String exitName) throws IOException, InterruptedException {
-        String defaultCongestionMessage = stationName + "역 " + exitName + "출구가 ";
-        CongestionResponse response = CongestionResponse.builder()
-                .congestionMessage(CongestionEnum.NULL.getMessage())
-                .build();
-        Optional<Station> station = stationRepository.findByStatnNameAndSKStationCodeIsNotNull(stationName);
-        if (station.isEmpty()) return response;
-        Calendar currentCalendar = Calendar.getInstance();
-        currentCalendar.add(currentCalendar.DATE, -7);
-        JSONObject passengerPerDay = SKApiUtil.getPassengerPerDayApiResult(
-                skKey,
-                station.get().getSKStationCode(),
-                LocalDateTime.now()
-                        .getDayOfWeek()
-                        .toString()
-                        .toUpperCase()
-                        .substring(0, 3));
-        JSONObject passengerByTime = SKApiUtil.getPassengerByTimeApiResult(
-                skKey,
-                station.get().getSKStationCode(),
-                new SimpleDateFormat("yyyyMMdd").format(currentCalendar.getTime()));
-        JSONObject passengerPerDayObject = (JSONObject) passengerPerDay.get("contents");
-        JSONObject passengerByTimeObject = (JSONObject) passengerByTime.get("contents");
-        Optional<JSONArray> passengerPerDayArray = Optional.ofNullable((JSONArray) passengerPerDayObject.get("stat"));
-        Optional<JSONArray> passengerByTimeArray = Optional.ofNullable((JSONArray) passengerByTimeObject.get("raw"));
-        List<PassengerPerDayResult> passengerPerDayResult = new ArrayList<>();
-        List<PassengerByTimeResult> passengerByTimeResult = new ArrayList<>();
-        if (passengerPerDayArray.isPresent()) {
-            passengerPerDayResult = new ArrayList<>(jsonUtil.convertJsonArrayToDtoList(passengerPerDayArray.get(), PassengerPerDayResult.class));
-        }
-        if (passengerByTimeArray.isPresent()) {
-            passengerByTimeResult = new ArrayList<>(jsonUtil.convertJsonArrayToDtoList(passengerByTimeArray.get(), PassengerByTimeResult.class));
-        }
-        int totalUser = 0;
-        int nowUser = 0;
-        for (PassengerPerDayResult result : passengerPerDayResult) {
-            if (result.getExit().equals(exitName)) nowUser = result.getUserCount();
-            totalUser += result.getUserCount();
-        }
-        double stationWeight = (double) totalUser / 12 / avgPassenger;
-        double exitWeight = (double) nowUser / (double) totalUser * 100;
-        totalUser = 0;
-        nowUser = 0;
-        for (PassengerByTimeResult result : passengerByTimeResult) {
-            if (result.getExit().equals(exitName)) {
-                totalUser += result.getUserCount();
-                if (result.getDatetime().substring(8, 10).equals(LocalDateTime.now().format(DateTimeFormatter.ofPattern("hh")))) {
-                    nowUser = result.getUserCount();
-                }
+    public CongestionResponse getCongestionForPushAlarm(String stationName, String exitName) {
+        try {
+            String defaultCongestionMessage = stationName + "역 " + exitName + "출구가 ";
+            CongestionResponse response = CongestionResponse.builder()
+                    .congestionMessage(CongestionEnum.NULL.getMessage())
+                    .build();
+            Optional<Station> station = stationRepository.findByStatnNameAndSKStationCodeIsNotNull(stationName);
+            if (station.isEmpty()) return response;
+            Calendar currentCalendar = Calendar.getInstance();
+            currentCalendar.add(currentCalendar.DATE, -7);
+            JSONObject passengerPerDay = SKApiUtil.getPassengerPerDayApiResult(
+                    skKey,
+                    station.get().getSKStationCode(),
+                    LocalDateTime.now()
+                            .getDayOfWeek()
+                            .toString()
+                            .toUpperCase()
+                            .substring(0, 3));
+            JSONObject passengerByTime = SKApiUtil.getPassengerByTimeApiResult(
+                    skKey,
+                    station.get().getSKStationCode(),
+                    new SimpleDateFormat("yyyyMMdd").format(currentCalendar.getTime()));
+            JSONObject passengerPerDayObject = (JSONObject) passengerPerDay.get("contents");
+            JSONObject passengerByTimeObject = (JSONObject) passengerByTime.get("contents");
+            Optional<JSONArray> passengerPerDayArray = Optional.ofNullable((JSONArray) passengerPerDayObject.get("stat"));
+            Optional<JSONArray> passengerByTimeArray = Optional.ofNullable((JSONArray) passengerByTimeObject.get("raw"));
+            List<PassengerPerDayResult> passengerPerDayResult = new ArrayList<>();
+            List<PassengerByTimeResult> passengerByTimeResult = new ArrayList<>();
+            if (passengerPerDayArray.isPresent()) {
+                passengerPerDayResult = new ArrayList<>(jsonUtil.convertJsonArrayToDtoList(passengerPerDayArray.get(), PassengerPerDayResult.class));
             }
+            if (passengerByTimeArray.isPresent()) {
+                passengerByTimeResult = new ArrayList<>(jsonUtil.convertJsonArrayToDtoList(passengerByTimeArray.get(), PassengerByTimeResult.class));
+            }
+            int totalUser = 0;
+            int nowUser = 0;
+            for (PassengerPerDayResult result : passengerPerDayResult) {
+                if (result == null) continue;
+                if (result.getUserCount() == null) continue;
+                if (result.getExit().equals(exitName)) nowUser = result.getUserCount();
+                totalUser += result.getUserCount();
+            }
+            double stationWeight = (double) totalUser / 12 / avgPassenger;
+            double exitWeight = (double) nowUser / (double) totalUser * 100;
+            totalUser = 0;
+            nowUser = 0;
+            for (PassengerByTimeResult result : passengerByTimeResult) {
+                if (result == null) continue;
+                if (result.getUserCount() == null) continue;
+                if (result.getExit().equals(exitName)) {
+                    totalUser += result.getUserCount();
+                    if (result.getDatetime().substring(8, 10).equals(LocalDateTime.now().format(DateTimeFormatter.ofPattern("hh")))) {
+                        nowUser = result.getUserCount();
+                    }
+                }
 
+            }
+            double timeWeight = (double) nowUser / totalUser * 100;
+            double congestion = stationWeight * exitWeight * timeWeight;
+            if (congestion < 20)
+                response.setCongestionMessage(defaultCongestionMessage + CongestionEnum.LOW.getMessage());
+            else if (congestion < 40)
+                response.setCongestionMessage(defaultCongestionMessage + CongestionEnum.NORMAL.getMessage());
+            else response.setCongestionMessage(defaultCongestionMessage + CongestionEnum.HIGH.getMessage());
+            return response;
+        } catch (Exception e) {
+            throw new AppException(ErrorCode.PUBLIC_API_ERROR, ErrorCode.PUBLIC_API_ERROR.getMessage());
         }
-        double timeWeight = (double) nowUser / totalUser * 100;
-        double congestion = stationWeight * exitWeight * timeWeight;
-        if (congestion < 20)
-            response.setCongestionMessage(defaultCongestionMessage + CongestionEnum.LOW.getMessage());
-        else if (congestion < 40)
-            response.setCongestionMessage(defaultCongestionMessage + CongestionEnum.NORMAL.getMessage());
-        else response.setCongestionMessage(defaultCongestionMessage + CongestionEnum.HIGH.getMessage());
-        return response;
+
     }
 
-    public CongestionResponse getCongestionForStationInfo(String stationName) throws IOException, InterruptedException {
-        String defaultCongestionMessage = stationName + "역이 ";
-        CongestionResponse response = CongestionResponse.builder()
-                .congestionMessage(CongestionEnum.NULL.getMessage())
-                .build();
-        Optional<Station> station = stationRepository.findByStatnNameAndSKStationCodeIsNotNull(stationName);
-        if (station.isEmpty()) return response;
-        Calendar currentCalendar = Calendar.getInstance();
-        currentCalendar.add(currentCalendar.DATE, -7);
-        JSONObject passengerPerDay = SKApiUtil.getPassengerPerDayApiResult(
-                skKey,
-                station.get().getSKStationCode(),
-                LocalDateTime.now()
-                        .getDayOfWeek()
-                        .toString()
-                        .toUpperCase()
-                        .substring(0, 3));
-        JSONObject passengerByTime = SKApiUtil.getPassengerByTimeApiResult(
-                skKey,
-                station.get().getSKStationCode(),
-                new SimpleDateFormat("yyyyMMdd").format(currentCalendar.getTime()));
-        JSONObject passengerPerDayObject = (JSONObject) passengerPerDay.get("contents");
-        JSONObject passengerByTimeObject = (JSONObject) passengerByTime.get("contents");
-        Optional<JSONArray> passengerPerDayArray = Optional.ofNullable((JSONArray) passengerPerDayObject.get("stat"));
-        Optional<JSONArray> passengerByTimeArray = Optional.ofNullable((JSONArray) passengerByTimeObject.get("raw"));
-        List<PassengerPerDayResult> passengerPerDayResult = new ArrayList<>();
-        List<PassengerByTimeResult> passengerByTimeResult = new ArrayList<>();
-        if (passengerPerDayArray.isPresent()) {
-            passengerPerDayResult = new ArrayList<>(jsonUtil.convertJsonArrayToDtoList(passengerPerDayArray.get(), PassengerPerDayResult.class));
-        }
-        if (passengerByTimeArray.isPresent()) {
-            passengerByTimeResult = new ArrayList<>(jsonUtil.convertJsonArrayToDtoList(passengerByTimeArray.get(), PassengerByTimeResult.class));
-        }
-        int totalUser = 0;
-        for (PassengerPerDayResult result : passengerPerDayResult) {
-            if (result == null) continue;
-            totalUser += result.getUserCount();
-        }
-        double stationWeight = (double) totalUser / 12 / avgPassenger;
-        totalUser = 0;
-        int nowUser = 0;
-        for (PassengerByTimeResult result : passengerByTimeResult) {
-            if (result == null) continue;
-            totalUser += result.getUserCount();
-            if (result.getDatetime().substring(8, 10).equals(LocalDateTime.now().format(DateTimeFormatter.ofPattern("hh")))) {
-                nowUser += result.getUserCount();
+    public CongestionResponse getCongestionForStationInfo(String stationName) {
+        try {
+            String defaultCongestionMessage = stationName + "역이 ";
+            CongestionResponse response = CongestionResponse.builder()
+                    .congestionMessage(CongestionEnum.NULL.getMessage())
+                    .build();
+            Optional<Station> station = stationRepository.findByStatnNameAndSKStationCodeIsNotNull(stationName);
+            if (station.isEmpty()) return response;
+            Calendar currentCalendar = Calendar.getInstance();
+            currentCalendar.add(currentCalendar.DATE, -7);
+            JSONObject passengerPerDay = SKApiUtil.getPassengerPerDayApiResult(
+                    skKey,
+                    station.get().getSKStationCode(),
+                    LocalDateTime.now()
+                            .getDayOfWeek()
+                            .toString()
+                            .toUpperCase()
+                            .substring(0, 3));
+            JSONObject passengerByTime = SKApiUtil.getPassengerByTimeApiResult(
+                    skKey,
+                    station.get().getSKStationCode(),
+                    new SimpleDateFormat("yyyyMMdd").format(currentCalendar.getTime()));
+            JSONObject passengerPerDayObject = (JSONObject) passengerPerDay.get("contents");
+            JSONObject passengerByTimeObject = (JSONObject) passengerByTime.get("contents");
+            Optional<JSONArray> passengerPerDayArray = Optional.ofNullable((JSONArray) passengerPerDayObject.get("stat"));
+            Optional<JSONArray> passengerByTimeArray = Optional.ofNullable((JSONArray) passengerByTimeObject.get("raw"));
+            List<PassengerPerDayResult> passengerPerDayResult = new ArrayList<>();
+            List<PassengerByTimeResult> passengerByTimeResult = new ArrayList<>();
+            if (passengerPerDayArray.isPresent()) {
+                passengerPerDayResult = new ArrayList<>(jsonUtil.convertJsonArrayToDtoList(passengerPerDayArray.get(), PassengerPerDayResult.class));
             }
+            if (passengerByTimeArray.isPresent()) {
+                passengerByTimeResult = new ArrayList<>(jsonUtil.convertJsonArrayToDtoList(passengerByTimeArray.get(), PassengerByTimeResult.class));
+            }
+            int totalUser = 0;
+            for (PassengerPerDayResult result : passengerPerDayResult) {
+                if (result == null) continue;
+                if (result.getUserCount() == null) continue;
+                totalUser += result.getUserCount();
+            }
+            double stationWeight = (double) totalUser / 12 / avgPassenger;
+            totalUser = 0;
+            int nowUser = 0;
+            for (PassengerByTimeResult result : passengerByTimeResult) {
+                if (result == null) continue;
+                if (result.getUserCount() == null) continue;
+                totalUser += result.getUserCount();
+                if (result.getDatetime().substring(8, 10).equals(LocalDateTime.now().format(DateTimeFormatter.ofPattern("hh")))) {
+                    nowUser += result.getUserCount();
+                }
+            }
+            double timeWeight = (double) nowUser / totalUser * 100;
+            double congestion = stationWeight * timeWeight;
+            if (congestion < 10)
+                response.setCongestionMessage(defaultCongestionMessage + CongestionEnum.LOW.getMessage());
+            else if (congestion < 15)
+                response.setCongestionMessage(defaultCongestionMessage + CongestionEnum.NORMAL.getMessage());
+            else response.setCongestionMessage(defaultCongestionMessage + CongestionEnum.HIGH.getMessage());
+            return response;
+        } catch (Exception e) {
+            throw new AppException(ErrorCode.PUBLIC_API_ERROR, ErrorCode.PUBLIC_API_ERROR.getMessage());
         }
-        double timeWeight = (double) nowUser / totalUser * 100;
-        double congestion = stationWeight * timeWeight;
-        if (congestion < 20)
-            response.setCongestionMessage(defaultCongestionMessage + CongestionEnum.LOW.getMessage());
-        else if (congestion < 40)
-            response.setCongestionMessage(defaultCongestionMessage + CongestionEnum.NORMAL.getMessage());
-        else response.setCongestionMessage(defaultCongestionMessage + CongestionEnum.HIGH.getMessage());
-        return response;
     }
 }
