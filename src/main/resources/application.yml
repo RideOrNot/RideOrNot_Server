@@ -35,3 +35,8 @@ logging:
         type:
           descriptor:
             sql: trace
+
+google:
+  client:
+    pw: def
+    id: abc
