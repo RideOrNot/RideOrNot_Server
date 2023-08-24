@@ -240,16 +240,23 @@ public class PublicApiService {
         return result;
     }
 
+    //SK 에서 제공하는 역의 경우
     public CongestionResponse getCongestionForPushAlarm(String stationName, String exitName) {
+
         try {
             String defaultCongestionMessage = stationName + "역 " + exitName + "출구가 ";
             CongestionResponse response = CongestionResponse.builder()
                     .congestionMessage(CongestionEnum.NULL.getMessage())
                     .build();
+            //SK API 에서 제공하는 역인지 확인
             Optional<Station> station = stationRepository.findByStatnNameAndSKStationCodeIsNotNull(stationName);
+
+            //제공하지 않는 역의 경우 제공하지 않음을 리턴
             if (station.isEmpty()) return response;
             Calendar currentCalendar = Calendar.getInstance();
             currentCalendar.add(currentCalendar.DATE, -7);
+
+            //오늘의 요일을 기준으로 3개월간의 특정 지하철역의 특정 출구의 3개월간 통행자수 합에 대한 정보를 조회
             JSONObject passengerPerDay = SKApiUtil.getPassengerPerDayApiResult(
                     skKey,
                     station.get().getSKStationCode(),
@@ -258,6 +265,7 @@ public class PublicApiService {
                             .toString()
                             .toUpperCase()
                             .substring(0, 3));
+            //현재 시간을 기준으로 일주일 전의 특정 지하철역의 특정 출구의 특정 시간의 통행자수에 대한 정보를 조회
             JSONObject passengerByTime = SKApiUtil.getPassengerByTimeApiResult(
                     skKey,
                     station.get().getSKStationCode(),
@@ -299,6 +307,8 @@ public class PublicApiService {
             }
             double timeWeight = (double) nowUser / totalUser * 100;
             double congestion = stationWeight * exitWeight * timeWeight;
+
+            //가중치의 곱 결과를 구간을 나누어 혼잡도 정보로 제공
             if (congestion < 20)
                 response.setCongestionMessage(defaultCongestionMessage + CongestionEnum.LOW.getMessage());
             else if (congestion < 40)
@@ -306,7 +316,9 @@ public class PublicApiService {
             else response.setCongestionMessage(defaultCongestionMessage + CongestionEnum.HIGH.getMessage());
             return response;
         } catch (Exception e) {
-            throw new AppException(ErrorCode.PUBLIC_API_ERROR, ErrorCode.PUBLIC_API_ERROR.getMessage());
+            return CongestionResponse.builder()
+                    .congestionMessage(CongestionEnum.NULL.getMessage())
+                    .build();
         }
 
     }
@@ -371,7 +383,9 @@ public class PublicApiService {
             else response.setCongestionMessage(defaultCongestionMessage + CongestionEnum.HIGH.getMessage());
             return response;
         } catch (Exception e) {
-            throw new AppException(ErrorCode.PUBLIC_API_ERROR, ErrorCode.PUBLIC_API_ERROR.getMessage());
+            return CongestionResponse.builder()
+                    .congestionMessage(CongestionEnum.NULL.getMessage())
+                    .build();
         }
     }
 }
