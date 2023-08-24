@@ -6,6 +6,9 @@ server:
   port: 8080
 
 spring:
+  database:
+      encrypt:
+        key: ${DB_ENCRYPT_KEY}
   redis:
     host: ${REDIS_HOST}
     port: ${REDIS_PORT}
