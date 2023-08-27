@@ -2,10 +2,27 @@ public-api-key:
   real-time-key: ${REAL_TIME_KEY}
   lat-lon-key: ${LAT_LON_KEY}
 
+
 server:
-  port: 8080
+  port: 8081
+  servlet: ##
+    context-path: /
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
 
 spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          google: # /oauth2/authorization/google 이 주소를 동작하게 한다.
+            client-id: 342718976152-cqk9qo90dbulb3js9m114cfbuss02ii1.apps.googleusercontent.com #900575659421-p64cmjec2kee4hld0i9ekri5g581ufip.apps.googleusercontent.com
+            client-secret: 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 #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
+            scope:
+              - email
+              - profile
   redis:
     host: ${REDIS_HOST}
     port: ${REDIS_PORT}
@@ -17,16 +34,21 @@ spring:
     url: ${DB_ENDPOINT}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
-
+    view:
+      prefix: /templates/
+      suffix: .mustache
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: update #create update none
       globally_quoted_identifiers: true
     properties:
       hibernate:
         show_sql: true
         format_sql: true
+      naming: ##
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    show-sql: true
 
 logging:
   level:
@@ -35,8 +57,3 @@ logging:
         type:
           descriptor:
             sql: trace
-
-google:
-  client:
-    pw: def
-    id: abc
