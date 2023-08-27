@@ -34,21 +34,22 @@ public class StationService {
     private final StationExitRepository stationExitRepository;
     private final StationRepository stationRepository;
     private final LineRepository lineRepository;
+    private final ArrivalInfoService arrivalInfoService;
     private final PublicApiService publicApiService;
 
     public PushAlarmResponse getPushAlarm(String stationName, String exitName) {
-        PushAlarmResponse response = new PushAlarmResponse(publicApiService.getRealTimeInfoForPushAlarm(stationName, exitName));
+        PushAlarmResponse response = new PushAlarmResponse(arrivalInfoService.getRealTimeInfoForPushAlarm(stationName, exitName));
         response.setCongestion(publicApiService.getCongestionForPushAlarm(stationName, exitName).getCongestionMessage());
         return response;
     }
 
     public StationInfoPageResponse getStationInfo(String stationName, String lineId) {
         CongestionResponse congestionResponse = publicApiService.getCongestionForStationInfo(stationName);
-        return new StationInfoPageResponse(publicApiService.getRealTimeInfoForStationInfoPage(stationName, lineId), congestionResponse.getCongestionMessage());
+        return new StationInfoPageResponse(arrivalInfoService.getRealTimeInfoForStationInfoPage(stationName, lineId), congestionResponse.getCongestionMessage());
     }
 
     public ArrivalInfoResponse getStationArrivalInfo(String stationName) {
-        return new ArrivalInfoResponse(publicApiService.getArrivalInfo(stationName));
+        return new ArrivalInfoResponse(arrivalInfoService.getArrivalInfo(stationName));
     }
 
     public String insertDistances() {
