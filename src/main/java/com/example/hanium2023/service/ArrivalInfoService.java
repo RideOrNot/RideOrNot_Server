@@ -1,14 +1,12 @@
 package com.example.hanium2023.service;
 
-import com.example.hanium2023.domain.dto.arrivalinfo.ArrivalInfoApiResult;
-import com.example.hanium2023.domain.dto.arrivalinfo.ArrivalInfoPushAlarmResponse;
-import com.example.hanium2023.domain.dto.arrivalinfo.ArrivalInfoStationInfoPageResponse;
+import com.example.hanium2023.domain.dto.publicapi.arrivalinfo.ArrivalInfoApiResult;
+import com.example.hanium2023.domain.dto.publicapi.arrivalinfo.ArrivalInfoPushAlarmResponse;
+import com.example.hanium2023.domain.dto.publicapi.arrivalinfo.ArrivalInfoStationInfoPageResponse;
 import com.example.hanium2023.domain.dto.user.MovingSpeedInfo;
 import com.example.hanium2023.domain.dto.user.UserDto;
 import com.example.hanium2023.enums.ArrivalCodeEnum;
 import com.example.hanium2023.enums.MovingMessageEnum;
-import com.example.hanium2023.repository.LineRepository;
-import com.example.hanium2023.repository.StationRepository;
 import com.example.hanium2023.repository.UserRepository;
 import com.example.hanium2023.util.JsonUtil;
 import com.example.hanium2023.util.RedisUtil;
