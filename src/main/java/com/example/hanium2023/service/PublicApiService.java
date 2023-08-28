@@ -1,32 +1,20 @@
 package com.example.hanium2023.service;
 
-import com.example.hanium2023.domain.dto.arrivalinfo.ArrivalInfoApiResult;
-import com.example.hanium2023.domain.dto.arrivalinfo.ArrivalInfoPushAlarmResponse;
-import com.example.hanium2023.domain.dto.arrivalinfo.ArrivalInfoStationInfoPageResponse;
 import com.example.hanium2023.domain.dto.congestion.AvailableStationInfoApiResult;
 import com.example.hanium2023.domain.dto.congestion.CongestionResponse;
 import com.example.hanium2023.domain.dto.congestion.PassengerByTimeResult;
 import com.example.hanium2023.domain.dto.congestion.PassengerPerDayResult;
-import com.example.hanium2023.domain.dto.user.MovingSpeedInfo;
-import com.example.hanium2023.domain.dto.user.UserDto;
 import com.example.hanium2023.domain.entity.Line;
 import com.example.hanium2023.domain.entity.Station;
-import com.example.hanium2023.enums.ArrivalCodeEnum;
 import com.example.hanium2023.enums.CongestionEnum;
-import com.example.hanium2023.enums.MovingMessageEnum;
-import com.example.hanium2023.exception.AppException;
-import com.example.hanium2023.exception.ErrorCode;
 import com.example.hanium2023.repository.LineRepository;
 import com.example.hanium2023.repository.StationRepository;
-import com.example.hanium2023.repository.UserRepository;
 import com.example.hanium2023.util.JsonUtil;
-import com.example.hanium2023.util.RedisUtil;
 import com.example.hanium2023.util.SKApiUtil;
 import lombok.RequiredArgsConstructor;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
@@ -37,12 +25,9 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -89,11 +74,11 @@ public class PublicApiService {
         }
     }
 
-    public String buildSubwayLocationApiUrl(String lineName) {
+    public String getLocationApiUrl(String lineName) {
         StringBuilder urlBuilder = new StringBuilder("http://swopenAPI.seoul.go.kr/api/subway/");
         try {
             urlBuilder.append(URLEncoder.encode(realTimeApiKey, "UTF-8"));
-            urlBuilder.append("/json/realtimePosition/0/30/");
+            urlBuilder.append("/json/realtimePosition/0/100/");
             urlBuilder.append(URLEncoder.encode(lineName, "UTF-8"));
             return urlBuilder.toString();
         } catch (UnsupportedEncodingException e) {

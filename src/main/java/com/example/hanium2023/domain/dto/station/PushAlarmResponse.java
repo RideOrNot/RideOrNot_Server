@@ -1,7 +1,6 @@
 package com.example.hanium2023.domain.dto.station;
 
-import com.example.hanium2023.domain.dto.arrivalinfo.ArrivalInfoPushAlarmResponse;
-import lombok.AllArgsConstructor;
+import com.example.hanium2023.domain.dto.publicapi.arrivalinfo.ArrivalInfoPushAlarmResponse;
 import lombok.Data;
 
 import java.time.LocalDateTime;
