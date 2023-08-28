@@ -1,10 +1,7 @@
-package com.example.hanium2023.domain.dto.arrivalinfo;
+package com.example.hanium2023.domain.dto.publicapi.arrivalinfo;
 
 
 import lombok.Data;
-
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
 @Data
 public class ArrivalInfoPushAlarmResponse {
