@@ -26,12 +26,16 @@ public class Station {
 
     private Integer beforeStationId1;
     private String beforeStation1;
+    private Integer beforeStation1Time;
     private Integer nextStationId1;
     private String nextStation1;
+    private Integer nextStation1Time;
     private Integer beforeStationId2;
     private String beforeStation2;
+    private Integer beforeStation2Time;
     private Integer nextStationId2;
     private String nextStation2;
+    private Integer nextStation2Time;
     private String SKStationCode;
 
     @ManyToOne(fetch = FetchType.LAZY)
