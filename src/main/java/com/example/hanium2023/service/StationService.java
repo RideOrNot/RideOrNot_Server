@@ -13,14 +13,17 @@ import com.example.hanium2023.repository.StationExitRepository;
 import com.example.hanium2023.repository.StationRepository;
 import com.example.hanium2023.util.CsvParsing;
 import com.example.hanium2023.util.KatecToLatLong;
+import com.example.hanium2023.util.TimeUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
@@ -97,8 +100,52 @@ public class StationService {
         return (rad * 180 / Math.PI);
     }
 
+    public void insertStationTime() throws IOException, InterruptedException {
+        CsvParsing stationTimeCsvParsing = new CsvParsing("station_time.csv", ",");
+        ArrayList<String[]> stationTimeList = new ArrayList<>();
+
+        String[] line = null;
+        int lineCount = 0;
+
+        // 역간 정보들을 읽어 들임
+        while ((line = stationTimeCsvParsing.nextRead()) != null) {
+            if (lineCount == 0) {
+                lineCount++;
+                continue;
+            }
+            stationTimeList.add(line);
+        }
+
+//        for (int i = 1; i < stationTimeList.size(); i++) {
+        for (int i = 10; i < 30; i++) {
+//            List<Station> stationList = stationRepository.findAllByStatnNameAndLine_LineId(stationTimeList.get(i)[2], Integer.valueOf("100" + stationTimeList.get(i)[1]));
+            Station station = stationRepository.findByStatnNameAndLine_LineId(stationTimeList.get(i)[2], Integer.valueOf("100" + stationTimeList.get(i)[1]));
+            if (!stationTimeList.isEmpty()) {
+//                Station station = stationList.get(0);
+
+                if (stationTimeList.get(i + 1)[2].equals(station.getNextStation1())) {
+                    Integer seconds = TimeUtil.convertString2Secs(stationTimeList.get(i)[3]);
+                    System.out.println("seconds = " + seconds);
+                    if (seconds == 0)
+                        continue;
+                    System.out.println("++++++++++++++++다음역 업뎃전+++++++++++++++");
+                    System.out.println("station.getStatnName() = " + station.getStatnName());
+                    System.out.println("station.getNextStation1Time() = " + station.getNextStation1Time());
+                    updateNextStation1Time(station, seconds);
+                    System.out.println("++++++++++++++++다음역 업뎃후+++++++++++++++");
+                }
+                if (stationTimeList.get(i - 1)[2].equals(station.getBeforeStation1())) {
+                    Integer seconds = TimeUtil.convertString2Secs(stationTimeList.get(i - 1)[3]);
+                    System.out.println("++++++++++++++++이전역 업뎃전+++++++++++++++");
+                    updateBeforeStation1Time(station, seconds);
+                    System.out.println("++++++++++++++++이전역 업뎃후+++++++++++++++");
+                }
+            }
+        }
+    }
+
     public void addStation() throws IOException, InterruptedException {
-        CsvParsing festivalCSVParsing = new CsvParsing("file path");
+        CsvParsing festivalCSVParsing = new CsvParsing("file path", "\t");
         String[] line = null;
 
         int lineCount = 0;
@@ -124,7 +171,7 @@ public class StationService {
     }
 
     public void insertRelatedStation() throws IOException, InterruptedException {
-        CsvParsing festivalCSVParsing = new CsvParsing("file path");
+        CsvParsing festivalCSVParsing = new CsvParsing("file path", "\t");
         String[] line = null;
         int lineCount = 0;
         while ((line = festivalCSVParsing.nextRead()) != null) {
@@ -152,6 +199,16 @@ public class StationService {
                     .build();
             stationRepository.save(updatedStation);
         }
+    }
+
+    @Transactional
+    public void updateNextStation1Time(Station station, Integer time) {
+        station.updateNextStation1Time(time);
+    }
+
+    @Transactional
+    public void updateBeforeStation1Time(Station station, Integer time) {
+        station.updateBeforeStation1Time(time);
     }
 }
 

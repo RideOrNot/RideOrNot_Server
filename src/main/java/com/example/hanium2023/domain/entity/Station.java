@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
@@ -49,5 +50,13 @@ public class Station {
         this.SKStationCode = code;
     }
 
+    @Transactional
+    public void updateNextStation1Time(Integer time){
+        this.nextStation1Time = time;
+    }
 
+    @Transactional
+    public void updateBeforeStation1Time(Integer time){
+        this.beforeStation1Time = time;
+    }
 }

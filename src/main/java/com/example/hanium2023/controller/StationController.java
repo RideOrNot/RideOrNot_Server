@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import javax.naming.Name;
+import java.io.IOException;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -59,5 +60,11 @@ public class StationController {
                 .sorted(Comparator.comparing(LocationInfoResponse::getDirection))
                 .collect(Collectors.toList());
         return Response.success(locationInfoApiResultList);
+    }
+
+    @GetMapping("/insert/stationTime")
+    public String insertStationTime() throws IOException, InterruptedException {
+        stationService.insertStationTime();
+        return "success";
     }
 }
