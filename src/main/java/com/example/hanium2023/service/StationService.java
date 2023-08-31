@@ -18,7 +18,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -38,9 +37,17 @@ public class StationService {
     private final LineRepository lineRepository;
     private final ArrivalInfoService arrivalInfoService;
     private final PublicApiService publicApiService;
+    private final LocationInfoService locationInfoService;
 
-    public PushAlarmResponse getPushAlarm(String stationName, String exitName) {
+
+    public PushAlarmResponse getPushAlarmFromArrivalInfo(String stationName, String exitName) {
         PushAlarmResponse response = new PushAlarmResponse(arrivalInfoService.getRealTimeInfoForPushAlarm(stationName, exitName));
+        response.setCongestion(publicApiService.getCongestionForPushAlarm(stationName, exitName).getCongestionMessage());
+        return response;
+    }
+
+    public PushAlarmResponse getPushAlarmFromLocationInfo(String stationName, String exitName) {
+        PushAlarmResponse response = new PushAlarmResponse(locationInfoService.getLocationInfoForPushAlarm(stationName, exitName));
         response.setCongestion(publicApiService.getCongestionForPushAlarm(stationName, exitName).getCongestionMessage());
         return response;
     }
