@@ -36,7 +36,7 @@ public class LocationInfoApiResult {
     private Integer lastStationId;
 
     @JsonProperty("trainSttus")
-    private Integer trainStatus;
+    private Integer trainStatusCode;
 
     @JsonProperty("directAt")
     private Integer isExpress;
@@ -55,7 +55,7 @@ public class LocationInfoApiResult {
                 ", stationId=" + stationId +
                 ", lastStationName='" + lastStationName + '\'' +
                 ", lastStationId=" + lastStationId +
-                ", trainStatus=" + trainStatus +
+                ", trainStatus=" + trainStatusCode +
                 ", isExpress=" + isExpress +
                 ", isLastTrain=" + isLastTrain +
                 '}';

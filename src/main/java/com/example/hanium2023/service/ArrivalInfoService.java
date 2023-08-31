@@ -5,7 +5,7 @@ import com.example.hanium2023.domain.dto.publicapi.arrivalinfo.ArrivalInfoPushAl
 import com.example.hanium2023.domain.dto.publicapi.arrivalinfo.ArrivalInfoStationInfoPageResponse;
 import com.example.hanium2023.domain.dto.user.MovingSpeedInfo;
 import com.example.hanium2023.domain.dto.user.UserDto;
-import com.example.hanium2023.enums.ArrivalCodeEnum;
+import com.example.hanium2023.enums.TrainStatusCodeEnum;
 import com.example.hanium2023.enums.MovingMessageEnum;
 import com.example.hanium2023.repository.UserRepository;
 import com.example.hanium2023.util.JsonUtil;
@@ -60,7 +60,7 @@ public class ArrivalInfoService {
         Predicate<ArrivalInfoApiResult> arrivalInfoFilter = removeTooFarArrivalInfoFilter.and(this::removeInvalidArrivalInfo);
         List<ArrivalInfoApiResult> arrivalInfoApiResultList = getArrivalInfoFromPublicApi(stationName, arrivalInfoFilter);
 
-        UserDto userDto = new UserDto(userRepository.findById(1L).get());
+        UserDto userDto = new UserDto(userRepository.findById(38L).get());
 
         return arrivalInfoApiResultList
                 .stream()
@@ -146,7 +146,7 @@ public class ArrivalInfoService {
     }
 
     private boolean removeTooFarArrivalInfo(ArrivalInfoApiResult arrivalInfo) {
-        return arrivalInfo.getArrivalCode() != ArrivalCodeEnum.NOT_CLOSE_STATION.getCode();
+        return arrivalInfo.getArrivalCode() != TrainStatusCodeEnum.NOT_CLOSE_STATION.getCode();
     }
 
     private boolean removeInvalidArrivalInfo(ArrivalInfoApiResult arrivalInfo) {
@@ -154,6 +154,6 @@ public class ArrivalInfoService {
     }
 
     private boolean removeExpiredArrivalInfo(ArrivalInfoApiResult arrivalInfo) {
-        return (arrivalInfo.getArrivalTime() > 0) || (arrivalInfo.getArrivalCode() == ArrivalCodeEnum.NOT_CLOSE_STATION.getCode());
+        return (arrivalInfo.getArrivalTime() > 0) || (arrivalInfo.getArrivalCode() == TrainStatusCodeEnum.NOT_CLOSE_STATION.getCode());
     }
 }

@@ -1,8 +1,7 @@
 package com.example.hanium2023.domain.dto.publicapi.location;
 
-import com.example.hanium2023.enums.ArrivalCodeEnum;
+import com.example.hanium2023.enums.TrainStatusCodeEnum;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -44,7 +43,7 @@ public class LocationInfoResponse {
         this.stationId = locationInfoApiResult.getStationId();
         this.lastStationName = locationInfoApiResult.getStationName();
         this.lastStationId = locationInfoApiResult.getStationId();
-        this.trainStatus = ArrivalCodeEnum.getEnumByCode(locationInfoApiResult.getTrainStatus()).getStatus();
+        this.trainStatus = TrainStatusCodeEnum.getEnumByCode(locationInfoApiResult.getTrainStatusCode()).getStatus();
         this.isExpress = locationInfoApiResult.getIsExpress();
         this.isLastTrain = locationInfoApiResult.getIsLastTrain();
     }
