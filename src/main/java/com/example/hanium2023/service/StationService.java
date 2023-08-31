@@ -7,7 +7,6 @@ import com.example.hanium2023.domain.dto.station.StationInfoPageResponse;
 import com.example.hanium2023.domain.entity.Line;
 import com.example.hanium2023.domain.entity.Station;
 import com.example.hanium2023.domain.entity.StationExit;
-import com.example.hanium2023.enums.CongestionEnum;
 import com.example.hanium2023.repository.LineRepository;
 import com.example.hanium2023.repository.StationExitRepository;
 import com.example.hanium2023.repository.StationRepository;
@@ -100,6 +99,7 @@ public class StationService {
         return (rad * 180 / Math.PI);
     }
 
+//    @Transactional
     public void insertStationTime() throws IOException, InterruptedException {
         CsvParsing stationTimeCsvParsing = new CsvParsing("station_time.csv", ",");
         ArrayList<String[]> stationTimeList = new ArrayList<>();
@@ -116,13 +116,12 @@ public class StationService {
             stationTimeList.add(line);
         }
 
-//        for (int i = 1; i < stationTimeList.size(); i++) {
-        for (int i = 10; i < 30; i++) {
-//            List<Station> stationList = stationRepository.findAllByStatnNameAndLine_LineId(stationTimeList.get(i)[2], Integer.valueOf("100" + stationTimeList.get(i)[1]));
-            Station station = stationRepository.findByStatnNameAndLine_LineId(stationTimeList.get(i)[2], Integer.valueOf("100" + stationTimeList.get(i)[1]));
-            if (!stationTimeList.isEmpty()) {
-//                Station station = stationList.get(0);
+        for (int i = 1; i < stationTimeList.size(); i++) {
+            List<Station> stationList = stationRepository.findAllByStatnNameAndLine_LineId(stationTimeList.get(i)[2], Integer.valueOf("100" + stationTimeList.get(i)[1]));
+            if (!stationList.isEmpty()) {
+                Station station = stationList.get(0);
 
+                // 다음 행의 역이 db에 저장된 nextStation과 같다면 소요 시간을 저장
                 if (stationTimeList.get(i + 1)[2].equals(station.getNextStation1())) {
                     Integer seconds = TimeUtil.convertString2Secs(stationTimeList.get(i)[3]);
                     System.out.println("seconds = " + seconds);
@@ -130,16 +129,19 @@ public class StationService {
                         continue;
                     System.out.println("++++++++++++++++다음역 업뎃전+++++++++++++++");
                     System.out.println("station.getStatnName() = " + station.getStatnName());
-                    System.out.println("station.getNextStation1Time() = " + station.getNextStation1Time());
-                    updateNextStation1Time(station, seconds);
+                    System.out.println("station.getNextStation1Time() = " + station.getNextStationTime1());
+                    station.updateNextStationTime1(seconds);
                     System.out.println("++++++++++++++++다음역 업뎃후+++++++++++++++");
                 }
+
+                // 이전 행의 역이 db에 저장된 beforeStation과 같다면 소요 시간을 저장
                 if (stationTimeList.get(i - 1)[2].equals(station.getBeforeStation1())) {
                     Integer seconds = TimeUtil.convertString2Secs(stationTimeList.get(i - 1)[3]);
                     System.out.println("++++++++++++++++이전역 업뎃전+++++++++++++++");
-                    updateBeforeStation1Time(station, seconds);
+                    station.updateBeforeStationTime1(seconds);
                     System.out.println("++++++++++++++++이전역 업뎃후+++++++++++++++");
                 }
+                stationRepository.save(station);
             }
         }
     }
@@ -199,16 +201,6 @@ public class StationService {
                     .build();
             stationRepository.save(updatedStation);
         }
-    }
-
-    @Transactional
-    public void updateNextStation1Time(Station station, Integer time) {
-        station.updateNextStation1Time(time);
-    }
-
-    @Transactional
-    public void updateBeforeStation1Time(Station station, Integer time) {
-        station.updateBeforeStation1Time(time);
     }
 }
 

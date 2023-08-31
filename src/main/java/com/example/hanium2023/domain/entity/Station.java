@@ -27,16 +27,16 @@ public class Station {
 
     private Integer beforeStationId1;
     private String beforeStation1;
-    private Integer beforeStation1Time;
+    private Integer beforeStationTime1;
     private Integer nextStationId1;
     private String nextStation1;
-    private Integer nextStation1Time;
+    private Integer nextStationTime1;
     private Integer beforeStationId2;
     private String beforeStation2;
-    private Integer beforeStation2Time;
+    private Integer beforeStationTime2;
     private Integer nextStationId2;
     private String nextStation2;
-    private Integer nextStation2Time;
+    private Integer nextStationTime2;
     private String SKStationCode;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -50,13 +50,13 @@ public class Station {
         this.SKStationCode = code;
     }
 
-    @Transactional
-    public void updateNextStation1Time(Integer time){
-        this.nextStation1Time = time;
+    public void updateNextStationTime1(Integer time){
+        System.out.println("++++++++++++++++엔티티 함수 실행 전+++++++++++++++");
+        this.nextStationTime1 = time;
+        System.out.println("++++++++++++++++엔티티 함수 실행 후+++++++++++++++");
     }
 
-    @Transactional
-    public void updateBeforeStation1Time(Integer time){
-        this.beforeStation1Time = time;
+    public void updateBeforeStationTime1(Integer time){
+        this.beforeStationTime1 = time;
     }
 }
