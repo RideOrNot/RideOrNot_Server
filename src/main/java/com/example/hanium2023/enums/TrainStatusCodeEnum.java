@@ -5,7 +5,7 @@ import lombok.Getter;
 
 @AllArgsConstructor
 @Getter
-public enum ArrivalCodeEnum {
+public enum TrainStatusCodeEnum {
     ENTER(0, "진입"),
     ARRIVE(1, "도착"),
     DEPART(2, "출발"),
@@ -16,8 +16,8 @@ public enum ArrivalCodeEnum {
     private final int code;
     private final String status;
 
-    public static ArrivalCodeEnum getEnumByCode(int code) {
-        for (ArrivalCodeEnum value : ArrivalCodeEnum.values()) {
+    public static TrainStatusCodeEnum getEnumByCode(int code) {
+        for (TrainStatusCodeEnum value : TrainStatusCodeEnum.values()) {
             if (value.getCode() == code) {
                 return value;
             }
