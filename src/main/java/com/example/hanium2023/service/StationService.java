@@ -99,7 +99,7 @@ public class StationService {
         return (rad * 180 / Math.PI);
     }
 
-//    @Transactional
+    //    @Transactional
     public void insertStationTime() throws IOException, InterruptedException {
         CsvParsing stationTimeCsvParsing = new CsvParsing("station_time.csv", ",");
         ArrayList<String[]> stationTimeList = new ArrayList<>();
@@ -116,33 +116,37 @@ public class StationService {
             stationTimeList.add(line);
         }
 
-        for (int i = 1; i < stationTimeList.size(); i++) {
+        for (int i = 1; i < stationTimeList.size() - 1; i++) {
             List<Station> stationList = stationRepository.findAllByStatnNameAndLine_LineId(stationTimeList.get(i)[2], Integer.valueOf("100" + stationTimeList.get(i)[1]));
-            if (!stationList.isEmpty()) {
+            // 현재 db 데이터에 문제가 있어 해당 조건 임시 추가
+            if (stationList.size() == 1) {
                 Station station = stationList.get(0);
 
                 // 다음 행의 역이 db에 저장된 nextStation과 같다면 소요 시간을 저장
                 if (stationTimeList.get(i + 1)[2].equals(station.getNextStation1())) {
                     Integer seconds = TimeUtil.convertString2Secs(stationTimeList.get(i)[3]);
-                    System.out.println("seconds = " + seconds);
                     if (seconds == 0)
                         continue;
-                    System.out.println("++++++++++++++++다음역 업뎃전+++++++++++++++");
-                    System.out.println("station.getStatnName() = " + station.getStatnName());
-                    System.out.println("station.getNextStation1Time() = " + station.getNextStationTime1());
                     station.updateNextStationTime1(seconds);
-                    System.out.println("++++++++++++++++다음역 업뎃후+++++++++++++++");
                 }
 
                 // 이전 행의 역이 db에 저장된 beforeStation과 같다면 소요 시간을 저장
                 if (stationTimeList.get(i - 1)[2].equals(station.getBeforeStation1())) {
                     Integer seconds = TimeUtil.convertString2Secs(stationTimeList.get(i - 1)[3]);
-                    System.out.println("++++++++++++++++이전역 업뎃전+++++++++++++++");
                     station.updateBeforeStationTime1(seconds);
-                    System.out.println("++++++++++++++++이전역 업뎃후+++++++++++++++");
                 }
                 stationRepository.save(station);
             }
+        }
+        List<Station> stationList = stationRepository.findAll();
+        for (Station station : stationList) {
+            if (station.getBeforeStationTime1() == null || station.getBeforeStationTime1() == 0) {
+                station.updateBeforeStationTime1(90);
+            }
+            if (station.getNextStationTime1() == null || station.getNextStationTime1() == 0) {
+                station.updateNextStationTime1(90);
+            }
+            stationRepository.save(station);
         }
     }
 
