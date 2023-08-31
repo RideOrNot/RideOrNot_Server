@@ -16,4 +16,5 @@ public interface StationRepository extends JpaRepository<Station, Integer> {
 
     List<Station> findAllByStatnNameAndLine_LineId(String stationName, Integer lineId);
     Station findByStatnNameAndLine_LineId(String stationName, Integer lineId);
+    List<Station> findAll();
 }
