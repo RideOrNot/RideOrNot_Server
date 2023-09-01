@@ -1,8 +1,10 @@
 package com.example.hanium2023.service;
 
 import com.example.hanium2023.domain.dto.congestion.CongestionResponse;
+import com.example.hanium2023.domain.dto.publicapi.location.LocationInfoPushAlarm;
 import com.example.hanium2023.domain.dto.station.ArrivalInfoResponse;
-import com.example.hanium2023.domain.dto.station.PushAlarmResponse;
+import com.example.hanium2023.domain.dto.station.ArrivalInfoPushAlarmResponse;
+import com.example.hanium2023.domain.dto.station.LocationInfoPushAlarmResponse;
 import com.example.hanium2023.domain.dto.station.StationInfoPageResponse;
 import com.example.hanium2023.domain.entity.Line;
 import com.example.hanium2023.domain.entity.Station;
@@ -40,14 +42,22 @@ public class StationService {
     private final LocationInfoService locationInfoService;
 
 
-    public PushAlarmResponse getPushAlarmFromArrivalInfo(String stationName, String exitName) {
-        PushAlarmResponse response = new PushAlarmResponse(arrivalInfoService.getRealTimeInfoForPushAlarm(stationName, exitName));
+    public ArrivalInfoPushAlarmResponse getPushAlarmFromArrivalInfo(String stationName, String exitName) {
+        ArrivalInfoPushAlarmResponse response = new ArrivalInfoPushAlarmResponse(arrivalInfoService.getRealTimeInfoForPushAlarm(stationName, exitName));
         response.setCongestion(publicApiService.getCongestionForPushAlarm(stationName, exitName).getCongestionMessage());
         return response;
     }
 
-    public PushAlarmResponse getPushAlarmFromLocationInfo(String stationName, String exitName) {
-        PushAlarmResponse response = new PushAlarmResponse(locationInfoService.getLocationInfoForPushAlarm(stationName, exitName));
+    public LocationInfoPushAlarmResponse getPushAlarmFromLocationInfo(String stationName, String exitName) {
+        List<LocationInfoPushAlarm> locationInfoForPushAlarm = locationInfoService.getLocationInfoForPushAlarm(stationName, exitName);
+        for(LocationInfoPushAlarm l : locationInfoForPushAlarm){
+            System.out.println(l);
+        }
+        LocationInfoPushAlarmResponse response = new LocationInfoPushAlarmResponse(locationInfoForPushAlarm);
+
+        for(LocationInfoPushAlarm l : response.getArrivalInfo()){
+            System.out.println(l);
+        }
         response.setCongestion(publicApiService.getCongestionForPushAlarm(stationName, exitName).getCongestionMessage());
         return response;
     }

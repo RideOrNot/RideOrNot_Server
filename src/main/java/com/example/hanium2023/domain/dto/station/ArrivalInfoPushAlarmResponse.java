@@ -1,6 +1,6 @@
 package com.example.hanium2023.domain.dto.station;
 
-import com.example.hanium2023.domain.dto.publicapi.arrivalinfo.ArrivalInfoPushAlarmResponse;
+import com.example.hanium2023.domain.dto.publicapi.arrivalinfo.ArrivalInfoPushAlarm;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -9,12 +9,12 @@ import java.util.List;
 import java.util.Locale;
 
 @Data
-public class PushAlarmResponse {
-    List<ArrivalInfoPushAlarmResponse> arrivalInfo;
+public class ArrivalInfoPushAlarmResponse {
+    List<ArrivalInfoPushAlarm> arrivalInfo;
     String currentTime;
     String congestion;
 
-    public PushAlarmResponse(List<ArrivalInfoPushAlarmResponse> arrivalInfo) {
+    public ArrivalInfoPushAlarmResponse(List<ArrivalInfoPushAlarm> arrivalInfo) {
         this.arrivalInfo = arrivalInfo;
         this.currentTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd a HH:mm:ss").withLocale(Locale.forLanguageTag("ko")));
     }

@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ArrivalInfoApiResult {
     @JsonProperty("barvlDt")
-    private long arrivalTime;
+    private int arrivalTime;
 
     @JsonProperty("updnLine")
     private String direction;

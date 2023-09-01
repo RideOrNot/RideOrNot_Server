@@ -1,7 +1,7 @@
 package com.example.hanium2023.service;
 
 import com.example.hanium2023.domain.dto.publicapi.arrivalinfo.ArrivalInfoApiResult;
-import com.example.hanium2023.domain.dto.publicapi.arrivalinfo.ArrivalInfoPushAlarmResponse;
+import com.example.hanium2023.domain.dto.publicapi.arrivalinfo.ArrivalInfoPushAlarm;
 import com.example.hanium2023.domain.dto.publicapi.arrivalinfo.ArrivalInfoStationInfoPageResponse;
 import com.example.hanium2023.domain.dto.user.MovingSpeedInfo;
 import com.example.hanium2023.domain.dto.user.UserDto;
@@ -55,7 +55,7 @@ public class ArrivalInfoService {
                 .collect(Collectors.toList());
     }
 
-    public List<ArrivalInfoPushAlarmResponse> getRealTimeInfoForPushAlarm(String stationName, String exitName) {
+    public List<ArrivalInfoPushAlarm> getRealTimeInfoForPushAlarm(String stationName, String exitName) {
         Predicate<ArrivalInfoApiResult> removeTooFarArrivalInfoFilter = this::removeTooFarArrivalInfo;
         Predicate<ArrivalInfoApiResult> arrivalInfoFilter = removeTooFarArrivalInfoFilter.and(this::removeInvalidArrivalInfo);
         List<ArrivalInfoApiResult> arrivalInfoApiResultList = getArrivalInfoFromPublicApi(stationName, arrivalInfoFilter);
@@ -64,7 +64,7 @@ public class ArrivalInfoService {
 
         return arrivalInfoApiResultList
                 .stream()
-                .map(ArrivalInfoPushAlarmResponse::new)
+                .map(ArrivalInfoPushAlarm::new)
                 .map(apiResult -> calculateMovingTime(apiResult, stationName, exitName, userDto))
                 .collect(Collectors.toList());
     }
@@ -85,25 +85,25 @@ public class ArrivalInfoService {
         return arrivalInfoApiResultList;
     }
 
-    private ArrivalInfoPushAlarmResponse calculateMovingTime(ArrivalInfoPushAlarmResponse arrivalInfoPushAlarmResponse, String stationName, String exitName, UserDto userDto) {
-        Integer stationId = redisUtil.getStationIdByStationNameAndLineId(stationName, Integer.valueOf(arrivalInfoPushAlarmResponse.getLineId()));
+    private ArrivalInfoPushAlarm calculateMovingTime(ArrivalInfoPushAlarm arrivalInfoPushAlarm, String stationName, String exitName, UserDto userDto) {
+        Integer stationId = redisUtil.getStationIdByStationNameAndLineId(stationName, Integer.valueOf(arrivalInfoPushAlarm.getLineId()));
         double distance = redisUtil.getDistanceByStationIdAndExitName(stationId, exitName);
-        double minMovingSpeed = distance / (double) arrivalInfoPushAlarmResponse.getArrivalTime();
+        double minMovingSpeed = distance / (double) arrivalInfoPushAlarm.getArrivalTime();
 
         MovingSpeedInfo movingSpeedInfo = getMovingSpeedInfo(userDto, minMovingSpeed);
 
         long movingTime = (long) (distance / movingSpeedInfo.getMovingSpeed());
 
         if (movingSpeedInfo.getMovingSpeed() == -1.0)
-            arrivalInfoPushAlarmResponse.setMessage(movingSpeedInfo.getMovingMessageEnum().getMessage());
+            arrivalInfoPushAlarm.setMessage(movingSpeedInfo.getMovingMessageEnum().getMessage());
         else
-            arrivalInfoPushAlarmResponse.setMessage(movingTime + "초 동안 " + movingSpeedInfo.getMovingMessageEnum().getMessage());
+            arrivalInfoPushAlarm.setMessage(movingTime + "초 동안 " + movingSpeedInfo.getMovingMessageEnum().getMessage());
 
-        arrivalInfoPushAlarmResponse.setMovingTime(movingTime > 0 ? movingTime : 0);
-        arrivalInfoPushAlarmResponse.setMovingSpeedStep(movingSpeedInfo.getMovingMessageEnum().getMovingSpeedStep());
-        arrivalInfoPushAlarmResponse.setMovingSpeed(movingSpeedInfo.getMovingSpeed());
+        arrivalInfoPushAlarm.setMovingTime(movingTime > 0 ? movingTime : 0);
+        arrivalInfoPushAlarm.setMovingSpeedStep(movingSpeedInfo.getMovingMessageEnum().getMovingSpeedStep());
+        arrivalInfoPushAlarm.setMovingSpeed(movingSpeedInfo.getMovingSpeed());
 
-        return arrivalInfoPushAlarmResponse;
+        return arrivalInfoPushAlarm;
     }
 
     private MovingSpeedInfo getMovingSpeedInfo(UserDto userDto, double minMovingSpeed) {
@@ -135,7 +135,7 @@ public class ArrivalInfoService {
         LocalDateTime currentTime = LocalDateTime.now();
         LocalDateTime targetTime = LocalDateTime.parse(apiResult.getCreatedAt(), formatter);
         Duration timeGap = Duration.between(targetTime, currentTime);
-        long correctedArrivalTime = apiResult.getArrivalTime() - timeGap.getSeconds();
+        int correctedArrivalTime = (int) (apiResult.getArrivalTime() - timeGap.getSeconds());
 
         apiResult.setArrivalTime(correctedArrivalTime > 0 ? correctedArrivalTime : 0);
         return apiResult;

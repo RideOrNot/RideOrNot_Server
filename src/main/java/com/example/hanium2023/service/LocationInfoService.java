@@ -1,7 +1,7 @@
 package com.example.hanium2023.service;
 
-import com.example.hanium2023.domain.dto.publicapi.arrivalinfo.ArrivalInfoPushAlarmResponse;
 import com.example.hanium2023.domain.dto.publicapi.location.LocationInfoApiResult;
+import com.example.hanium2023.domain.dto.publicapi.location.LocationInfoPushAlarm;
 import com.example.hanium2023.domain.dto.user.MovingSpeedInfo;
 import com.example.hanium2023.domain.dto.user.UserDto;
 import com.example.hanium2023.domain.entity.Station;
@@ -16,6 +16,9 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -31,61 +34,65 @@ public class LocationInfoService {
     private final RedisUtil redisUtil;
 
 
-    public List<ArrivalInfoPushAlarmResponse> getLocationInfoForPushAlarm(String stationName, String exitName) {
+    public List<LocationInfoPushAlarm> getLocationInfoForPushAlarm(String stationName, String exitName) {
         List<Station> stationList = stationRepository.findAllByStatnName(stationName);
         List<LocationInfoApiResult> locationInfoApiResultList = new ArrayList<>();
         for (Station s : stationList) {
             locationInfoApiResultList.addAll(getLocationInfoFromPublicApi(s.getLine().getLineName()));
-            try {
-            } catch (Exception e) {
-                System.out.println(e);
-            }
         }
 
         UserDto userDto = new UserDto(userRepository.findById(38L).get());
 
         return locationInfoApiResultList
                 .stream()
-                .filter(locationInfoApiResult ->
-                        locationInfoApiResult.getStationName().equals(stationName))
-                .filter(locationInfoApiResult ->
-                        locationInfoApiResult.getTrainStatusCode() == TrainStatusCodeEnum.DEPART_BEFORE_STATION.getCode())
-                .map(ArrivalInfoPushAlarmResponse::new)
-//                .map(apiResult -> calculateMovingTime(apiResult, stationName, exitName, userDto))
+                .filter(locationInfoApiResult -> locationInfoApiResult.getStationName().equals(stationName))
+                .filter(locationInfoApiResult -> locationInfoApiResult.getTrainStatusCode() == TrainStatusCodeEnum.DEPART_BEFORE_STATION.getCode())
+                .map(LocationInfoPushAlarm::new)
+                .map(this::calculateArrivalTime)
+                .map(apiResult -> calculateMovingTime(apiResult, stationName, exitName, userDto))
                 .collect(Collectors.toList());
+    }
 
+    private LocationInfoPushAlarm calculateArrivalTime(LocationInfoPushAlarm locationInfoPushAlarm) {
+        LocalDateTime currentTime = LocalDateTime.now();
+        LocalDateTime targetTime = LocalDateTime.parse(locationInfoPushAlarm.getCreatedAt(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        Station station = stationRepository.findByStatnNameAndLine_LineId(locationInfoPushAlarm.getStationName(), Integer.valueOf(locationInfoPushAlarm.getLineId()));
+        Integer adjacentStationTime = locationInfoPushAlarm.getDirection().equals("상행") ? station.getBeforeStationTime1() : station.getNextStationTime1();
+        int timeGap = (int) Duration.between(currentTime, targetTime.plusSeconds(adjacentStationTime)).getSeconds();
+        locationInfoPushAlarm.setArrivalTime(timeGap);
+        return locationInfoPushAlarm;
     }
 
     public List<LocationInfoApiResult> getLocationInfoFromPublicApi(String lineName) {
         JSONObject apiResultJsonObject = publicApiService.getApiResult(publicApiService.getLocationApiUrl(lineName));
         Optional<JSONArray> jsonArray = Optional.ofNullable((JSONArray) apiResultJsonObject.get("realtimePositionList"));
-        List<LocationInfoApiResult> arrivalInfoApiResultList = new ArrayList<>();
+        List<LocationInfoApiResult> locationInfoApiResult = new ArrayList<>();
 
         if (jsonArray.isPresent()) {
-            arrivalInfoApiResultList = jsonUtil.convertJsonArrayToDtoList(jsonArray.get(), LocationInfoApiResult.class);
+            locationInfoApiResult = jsonUtil.convertJsonArrayToDtoList(jsonArray.get(), LocationInfoApiResult.class);
         }
-        return arrivalInfoApiResultList;
+        return locationInfoApiResult;
     }
 
-    private ArrivalInfoPushAlarmResponse calculateMovingTime(ArrivalInfoPushAlarmResponse arrivalInfoPushAlarmResponse, String stationName, String exitName, UserDto userDto) {
-        Integer stationId = redisUtil.getStationIdByStationNameAndLineId(stationName, Integer.valueOf(arrivalInfoPushAlarmResponse.getLineId()));
+    private LocationInfoPushAlarm calculateMovingTime(LocationInfoPushAlarm locationInfoPushAlarm, String stationName, String exitName, UserDto userDto) {
+        Integer stationId = redisUtil.getStationIdByStationNameAndLineId(stationName, Integer.valueOf(locationInfoPushAlarm.getLineId()));
         double distance = redisUtil.getDistanceByStationIdAndExitName(stationId, exitName);
-        double minMovingSpeed = distance / (double) arrivalInfoPushAlarmResponse.getArrivalTime();
+        double minMovingSpeed = distance / (double) locationInfoPushAlarm.getArrivalTime();
 
         MovingSpeedInfo movingSpeedInfo = getMovingSpeedInfo(userDto, minMovingSpeed);
 
         long movingTime = (long) (distance / movingSpeedInfo.getMovingSpeed());
 
         if (movingSpeedInfo.getMovingSpeed() == -1.0)
-            arrivalInfoPushAlarmResponse.setMessage(movingSpeedInfo.getMovingMessageEnum().getMessage());
+            locationInfoPushAlarm.setMessage(movingSpeedInfo.getMovingMessageEnum().getMessage());
         else
-            arrivalInfoPushAlarmResponse.setMessage(movingTime + "초 동안 " + movingSpeedInfo.getMovingMessageEnum().getMessage());
+            locationInfoPushAlarm.setMessage(movingTime + "초 동안 " + movingSpeedInfo.getMovingMessageEnum().getMessage());
 
-        arrivalInfoPushAlarmResponse.setMovingTime(movingTime > 0 ? movingTime : 0);
-        arrivalInfoPushAlarmResponse.setMovingSpeedStep(movingSpeedInfo.getMovingMessageEnum().getMovingSpeedStep());
-        arrivalInfoPushAlarmResponse.setMovingSpeed(movingSpeedInfo.getMovingSpeed());
+        locationInfoPushAlarm.setMovingTime(movingTime > 0 ? movingTime : 0);
+        locationInfoPushAlarm.setMovingSpeedStep(movingSpeedInfo.getMovingMessageEnum().getMovingSpeedStep());
+        locationInfoPushAlarm.setMovingSpeed(movingSpeedInfo.getMovingSpeed());
 
-        return arrivalInfoPushAlarmResponse;
+        return locationInfoPushAlarm;
     }
 
     private MovingSpeedInfo getMovingSpeedInfo(UserDto userDto, double minMovingSpeed) {
