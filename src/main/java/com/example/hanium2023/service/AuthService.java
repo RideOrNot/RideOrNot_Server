@@ -47,7 +47,7 @@ public class AuthService { //클라이언트로부터 받은 구글 아이디 �
                 User newUser = new User();
                 //newUser.setEmail(email);
                 newUser = User.builder()
-                        .userId(id)
+//                        .userId(id)
                         .nickname(firstName)
                         .username(fullName)
                         .email(email)
