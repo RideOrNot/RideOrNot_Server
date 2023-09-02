@@ -12,9 +12,8 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 
-@Component
 public class JsonUtil {
-    public <T> List<T> convertJsonArrayToDtoList(JSONArray jsonArray, Class<T> dtoClass) {
+    public static <T> List<T> convertJsonArrayToDtoList(JSONArray jsonArray, Class<T> dtoClass) {
         List<T> dtoList = new ArrayList<>();
         for(int i = 0; i<jsonArray.size();i++){
             JSONObject jsonObject = (JSONObject) jsonArray.get(i);
@@ -24,7 +23,7 @@ public class JsonUtil {
         return dtoList;
     }
 
-    public <T> T convertJsonObjectToDto(JSONObject jsonObject, Class<T> dtoClass) {
+    public static <T> T convertJsonObjectToDto(JSONObject jsonObject, Class<T> dtoClass) {
         ObjectMapper objectMapper = new ObjectMapper();
         try {
             return objectMapper.readValue(jsonObject.toString(), dtoClass);
@@ -33,7 +32,7 @@ public class JsonUtil {
         }
     }
 
-    public JSONObject parseJsonObject(String jsonString) {
+    public static JSONObject parseJsonObject(String jsonString) {
         JSONParser jsonParser = new JSONParser();
         try {
             return (JSONObject) jsonParser.parse(jsonString);

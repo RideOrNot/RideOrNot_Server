@@ -10,6 +10,7 @@ import com.example.hanium2023.enums.MovingMessageEnum;
 import com.example.hanium2023.repository.UserRepository;
 import com.example.hanium2023.util.JsonUtil;
 import com.example.hanium2023.util.RedisUtil;
+import com.example.hanium2023.util.TimeUtil;
 import lombok.RequiredArgsConstructor;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -30,7 +31,6 @@ import java.util.stream.Collectors;
 public class ArrivalInfoService {
     private final PublicApiService publicApiService;
     private final UserRepository userRepository;
-    private final JsonUtil jsonUtil;
     private final RedisUtil redisUtil;
 
     public List<ArrivalInfoStationInfoPageResponse> getArrivalInfo(String stationName) {
@@ -60,7 +60,7 @@ public class ArrivalInfoService {
         Predicate<ArrivalInfoApiResult> arrivalInfoFilter = removeTooFarArrivalInfoFilter.and(this::removeInvalidArrivalInfo);
         List<ArrivalInfoApiResult> arrivalInfoApiResultList = getArrivalInfoFromPublicApi(stationName, arrivalInfoFilter);
 
-        UserDto userDto = new UserDto(userRepository.findById(38L).get());
+        UserDto userDto = new UserDto(userRepository.findById(40L).get());
 
         return arrivalInfoApiResultList
                 .stream()
@@ -75,7 +75,7 @@ public class ArrivalInfoService {
         List<ArrivalInfoApiResult> arrivalInfoApiResultList = new ArrayList<>();
 
         if (jsonArray.isPresent()) {
-            arrivalInfoApiResultList = jsonUtil.convertJsonArrayToDtoList(jsonArray.get(), ArrivalInfoApiResult.class)
+            arrivalInfoApiResultList = JsonUtil.convertJsonArrayToDtoList(jsonArray.get(), ArrivalInfoApiResult.class)
                     .stream()
                     .map(this::correctArrivalTime)
                     .filter(this::removeExpiredArrivalInfo)
@@ -131,10 +131,9 @@ public class ArrivalInfoService {
     }
 
     private ArrivalInfoApiResult correctArrivalTime(ArrivalInfoApiResult apiResult) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        LocalDateTime currentTime = LocalDateTime.now();
-        LocalDateTime targetTime = LocalDateTime.parse(apiResult.getCreatedAt(), formatter);
-        Duration timeGap = Duration.between(targetTime, currentTime);
+        LocalDateTime currentTime = TimeUtil.getCurrentTime();
+        LocalDateTime targetTime = TimeUtil.getTimeFromString(apiResult.getCreatedAt());
+        Duration timeGap = TimeUtil.getDuration(targetTime, currentTime);
         int correctedArrivalTime = (int) (apiResult.getArrivalTime() - timeGap.getSeconds());
 
         apiResult.setArrivalTime(correctedArrivalTime > 0 ? correctedArrivalTime : 0);

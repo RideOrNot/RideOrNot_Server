@@ -11,6 +11,7 @@ import com.example.hanium2023.repository.StationRepository;
 import com.example.hanium2023.repository.UserRepository;
 import com.example.hanium2023.util.JsonUtil;
 import com.example.hanium2023.util.RedisUtil;
+import com.example.hanium2023.util.TimeUtil;
 import lombok.RequiredArgsConstructor;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -29,7 +30,6 @@ import java.util.stream.Collectors;
 public class LocationInfoService {
     private final StationRepository stationRepository;
     private final PublicApiService publicApiService;
-    private final JsonUtil jsonUtil;
     private final UserRepository userRepository;
     private final RedisUtil redisUtil;
 
@@ -41,7 +41,7 @@ public class LocationInfoService {
             locationInfoApiResultList.addAll(getLocationInfoFromPublicApi(s.getLine().getLineName()));
         }
 
-        UserDto userDto = new UserDto(userRepository.findById(38L).get());
+        UserDto userDto = new UserDto(userRepository.findById(40L).get());
 
         return locationInfoApiResultList
                 .stream()
@@ -54,11 +54,12 @@ public class LocationInfoService {
     }
 
     private LocationInfoPushAlarm calculateArrivalTime(LocationInfoPushAlarm locationInfoPushAlarm) {
-        LocalDateTime currentTime = LocalDateTime.now();
-        LocalDateTime targetTime = LocalDateTime.parse(locationInfoPushAlarm.getCreatedAt(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         Station station = stationRepository.findByStatnNameAndLine_LineId(locationInfoPushAlarm.getStationName(), Integer.valueOf(locationInfoPushAlarm.getLineId()));
         Integer adjacentStationTime = locationInfoPushAlarm.getDirection().equals("상행") ? station.getBeforeStationTime1() : station.getNextStationTime1();
-        int timeGap = (int) Duration.between(currentTime, targetTime.plusSeconds(adjacentStationTime)).getSeconds();
+
+        LocalDateTime currentTime = TimeUtil.getCurrentTime();
+        LocalDateTime targetTime = TimeUtil.getTimeFromString(locationInfoPushAlarm.getCreatedAt());
+        int timeGap = (int) TimeUtil.getDuration(currentTime,targetTime.plusSeconds(adjacentStationTime)).getSeconds();
         locationInfoPushAlarm.setArrivalTime(timeGap);
         return locationInfoPushAlarm;
     }
@@ -69,7 +70,7 @@ public class LocationInfoService {
         List<LocationInfoApiResult> locationInfoApiResult = new ArrayList<>();
 
         if (jsonArray.isPresent()) {
-            locationInfoApiResult = jsonUtil.convertJsonArrayToDtoList(jsonArray.get(), LocationInfoApiResult.class);
+            locationInfoApiResult = JsonUtil.convertJsonArrayToDtoList(jsonArray.get(), LocationInfoApiResult.class);
         }
         return locationInfoApiResult;
     }

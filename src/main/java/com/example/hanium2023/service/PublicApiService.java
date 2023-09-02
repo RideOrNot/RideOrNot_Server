@@ -36,7 +36,6 @@ public class PublicApiService {
     private String realTimeApiKey;
     @Value("${public-api-key.lat-lon-key}")
     private String skKey;
-    private final JsonUtil jsonUtil;
     private final LineRepository lineRepository;
     private final StationRepository stationRepository;
     private final int avgPassenger = 23058;
@@ -59,7 +58,7 @@ public class PublicApiService {
         }
         urlConnection.disconnect();
 
-        return jsonUtil.parseJsonObject(result.toString());
+        return JsonUtil.parseJsonObject(result.toString());
     }
 
     public String buildRealTimeApiUrl(String stationName) {
@@ -91,7 +90,7 @@ public class PublicApiService {
         Optional<JSONArray> jsonArray = Optional.ofNullable((JSONArray) apiResultJsonObject.get("contents"));
         List<AvailableStationInfoApiResult> result = new ArrayList<>();
         if (jsonArray.isPresent()) {
-            result = new ArrayList<>(jsonUtil.convertJsonArrayToDtoList(jsonArray.get(), AvailableStationInfoApiResult.class));
+            result = new ArrayList<>(JsonUtil.convertJsonArrayToDtoList(jsonArray.get(), AvailableStationInfoApiResult.class));
         }
         for (AvailableStationInfoApiResult availableStationInfoApiResult : result) {
             Optional<Line> line = lineRepository.findByLineNameContains(
@@ -228,7 +227,7 @@ public class PublicApiService {
             Optional<JSONArray> passengerPerDayArray = Optional.ofNullable((JSONArray) passengerPerDayObject.get("stat"));
             List<PassengerPerDayResult> passengerPerDayResult = new ArrayList<>();
             if (passengerPerDayArray.isPresent()) {
-                passengerPerDayResult = new ArrayList<>(jsonUtil.convertJsonArrayToDtoList(passengerPerDayArray.get(), PassengerPerDayResult.class));
+                passengerPerDayResult = new ArrayList<>(JsonUtil.convertJsonArrayToDtoList(passengerPerDayArray.get(), PassengerPerDayResult.class));
             }
             return passengerPerDayResult;
 
@@ -249,7 +248,7 @@ public class PublicApiService {
             Optional<JSONArray> passengerByTimeArray = Optional.ofNullable((JSONArray) passengerByTimeObject.get("raw"));
             List<PassengerByTimeResult> passengerByTimeResult = new ArrayList<>();
             if (passengerByTimeArray.isPresent()) {
-                passengerByTimeResult = new ArrayList<>(jsonUtil.convertJsonArrayToDtoList(passengerByTimeArray.get(), PassengerByTimeResult.class));
+                passengerByTimeResult = new ArrayList<>(JsonUtil.convertJsonArrayToDtoList(passengerByTimeArray.get(), PassengerByTimeResult.class));
             }
             return passengerByTimeResult;
         } catch (Exception e){
