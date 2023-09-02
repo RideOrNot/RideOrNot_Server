@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
@@ -26,12 +27,16 @@ public class Station {
 
     private Integer beforeStationId1;
     private String beforeStation1;
+    private Integer beforeStationTime1;
     private Integer nextStationId1;
     private String nextStation1;
+    private Integer nextStationTime1;
     private Integer beforeStationId2;
     private String beforeStation2;
+    private Integer beforeStationTime2;
     private Integer nextStationId2;
     private String nextStation2;
+    private Integer nextStationTime2;
     private String SKStationCode;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -45,5 +50,13 @@ public class Station {
         this.SKStationCode = code;
     }
 
+    public void updateNextStationTime1(Integer time){
+        System.out.println("++++++++++++++++엔티티 함수 실행 전+++++++++++++++");
+        this.nextStationTime1 = time;
+        System.out.println("++++++++++++++++엔티티 함수 실행 후+++++++++++++++");
+    }
 
+    public void updateBeforeStationTime1(Integer time){
+        this.beforeStationTime1 = time;
+    }
 }

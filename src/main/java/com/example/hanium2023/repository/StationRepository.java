@@ -11,5 +11,11 @@ import java.util.Optional;
 @Repository
 public interface StationRepository extends JpaRepository<Station, Integer> {
     List<Station> findAllByStatnNameAndLine(String stationName, Line line);
+
     Optional<Station> findByStatnNameAndSKStationCodeIsNotNull(String stationName);
+
+    List<Station> findAllByStatnNameAndLine_LineId(String stationName, Integer lineId);
+    Station findByStatnNameAndLine_LineId(String stationName, Integer lineId);
+    List<Station> findAll();
+    List<Station> findAllByStatnName(String stationName);
 }

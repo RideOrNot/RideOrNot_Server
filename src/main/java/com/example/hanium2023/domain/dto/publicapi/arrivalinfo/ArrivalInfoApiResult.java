@@ -1,4 +1,4 @@
-package com.example.hanium2023.domain.dto.arrivalinfo;
+package com.example.hanium2023.domain.dto.publicapi.arrivalinfo;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ArrivalInfoApiResult {
     @JsonProperty("barvlDt")
-    private long arrivalTime;
+    private int arrivalTime;
 
     @JsonProperty("updnLine")
     private String direction;

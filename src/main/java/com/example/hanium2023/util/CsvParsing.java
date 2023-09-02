@@ -15,27 +15,27 @@ public class CsvParsing {
     private int index;
 
     //This constructor is for read CSV File
-    public CsvParsing(String filePath) throws IOException {
+    public CsvParsing(String filePath, String regex) throws IOException {
         this.filePath = filePath;
         bufferedReader = new BufferedReader(new InputStreamReader(new FileInputStream(this.filePath), "UTF-8"));
         readCSV = new ArrayList<>();
 
-        makeList(bufferedReader);
+        makeList(bufferedReader, regex);
         this.index = 0;
     }
 
-    public void makeList(BufferedReader bufferedReader) throws IOException {
+    public void makeList(BufferedReader bufferedReader, String regex) throws IOException {
         String line = null;
-        while((line = bufferedReader.readLine())!=null) {
-            String[] lineContents = line.split("\t",-1);
+        while ((line = bufferedReader.readLine()) != null) {
+            String[] lineContents = line.split(regex, -1);
 
             readCSV.add(lineContents);
         }
     }
 
     //한 행을 읽음
-    public String[] nextRead(){
-        if(readCSV.size() == index){
+    public String[] nextRead() {
+        if (readCSV.size() == index) {
             return null;
         }
         return readCSV.get(index++);

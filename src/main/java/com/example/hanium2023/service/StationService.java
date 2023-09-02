@@ -1,18 +1,20 @@
 package com.example.hanium2023.service;
 
 import com.example.hanium2023.domain.dto.congestion.CongestionResponse;
+import com.example.hanium2023.domain.dto.publicapi.location.LocationInfoPushAlarm;
 import com.example.hanium2023.domain.dto.station.ArrivalInfoResponse;
-import com.example.hanium2023.domain.dto.station.PushAlarmResponse;
+import com.example.hanium2023.domain.dto.station.ArrivalInfoPushAlarmResponse;
+import com.example.hanium2023.domain.dto.station.LocationInfoPushAlarmResponse;
 import com.example.hanium2023.domain.dto.station.StationInfoPageResponse;
 import com.example.hanium2023.domain.entity.Line;
 import com.example.hanium2023.domain.entity.Station;
 import com.example.hanium2023.domain.entity.StationExit;
-import com.example.hanium2023.enums.CongestionEnum;
 import com.example.hanium2023.repository.LineRepository;
 import com.example.hanium2023.repository.StationExitRepository;
 import com.example.hanium2023.repository.StationRepository;
 import com.example.hanium2023.util.CsvParsing;
 import com.example.hanium2023.util.KatecToLatLong;
+import com.example.hanium2023.util.TimeUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -21,6 +23,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
@@ -34,21 +37,38 @@ public class StationService {
     private final StationExitRepository stationExitRepository;
     private final StationRepository stationRepository;
     private final LineRepository lineRepository;
+    private final ArrivalInfoService arrivalInfoService;
     private final PublicApiService publicApiService;
+    private final LocationInfoService locationInfoService;
 
-    public PushAlarmResponse getPushAlarm(String stationName, String exitName) {
-        PushAlarmResponse response = new PushAlarmResponse(publicApiService.getRealTimeInfoForPushAlarm(stationName, exitName));
+
+    public ArrivalInfoPushAlarmResponse getPushAlarmFromArrivalInfo(String stationName, String exitName) {
+        ArrivalInfoPushAlarmResponse response = new ArrivalInfoPushAlarmResponse(arrivalInfoService.getRealTimeInfoForPushAlarm(stationName, exitName));
+        response.setCongestion(publicApiService.getCongestionForPushAlarm(stationName, exitName).getCongestionMessage());
+        return response;
+    }
+
+    public LocationInfoPushAlarmResponse getPushAlarmFromLocationInfo(String stationName, String exitName) {
+        List<LocationInfoPushAlarm> locationInfoForPushAlarm = locationInfoService.getLocationInfoForPushAlarm(stationName, exitName);
+        for(LocationInfoPushAlarm l : locationInfoForPushAlarm){
+            System.out.println(l);
+        }
+        LocationInfoPushAlarmResponse response = new LocationInfoPushAlarmResponse(locationInfoForPushAlarm);
+
+        for(LocationInfoPushAlarm l : response.getArrivalInfo()){
+            System.out.println(l);
+        }
         response.setCongestion(publicApiService.getCongestionForPushAlarm(stationName, exitName).getCongestionMessage());
         return response;
     }
 
     public StationInfoPageResponse getStationInfo(String stationName, String lineId) {
         CongestionResponse congestionResponse = publicApiService.getCongestionForStationInfo(stationName);
-        return new StationInfoPageResponse(publicApiService.getRealTimeInfoForStationInfoPage(stationName, lineId), congestionResponse.getCongestionMessage());
+        return new StationInfoPageResponse(arrivalInfoService.getRealTimeInfoForStationInfoPage(stationName, lineId), congestionResponse.getCongestionMessage());
     }
 
     public ArrivalInfoResponse getStationArrivalInfo(String stationName) {
-        return new ArrivalInfoResponse(publicApiService.getArrivalInfo(stationName));
+        return new ArrivalInfoResponse(arrivalInfoService.getArrivalInfo(stationName));
     }
 
     public String insertDistances() {
@@ -96,8 +116,59 @@ public class StationService {
         return (rad * 180 / Math.PI);
     }
 
+    //    @Transactional
+    public void insertStationTime() throws IOException, InterruptedException {
+        CsvParsing stationTimeCsvParsing = new CsvParsing("station_time.csv", ",");
+        ArrayList<String[]> stationTimeList = new ArrayList<>();
+
+        String[] line = null;
+        int lineCount = 0;
+
+        // 역간 정보들을 읽어 들임
+        while ((line = stationTimeCsvParsing.nextRead()) != null) {
+            if (lineCount == 0) {
+                lineCount++;
+                continue;
+            }
+            stationTimeList.add(line);
+        }
+
+        for (int i = 1; i < stationTimeList.size() - 1; i++) {
+            List<Station> stationList = stationRepository.findAllByStatnNameAndLine_LineId(stationTimeList.get(i)[2], Integer.valueOf("100" + stationTimeList.get(i)[1]));
+            // 현재 db 데이터에 문제가 있어 해당 조건 임시 추가
+            if (stationList.size() == 1) {
+                Station station = stationList.get(0);
+
+                // 다음 행의 역이 db에 저장된 nextStation과 같다면 소요 시간을 저장
+                if (stationTimeList.get(i + 1)[2].equals(station.getNextStation1())) {
+                    Integer seconds = TimeUtil.convertString2Secs(stationTimeList.get(i)[3]);
+                    if (seconds == 0)
+                        continue;
+                    station.updateNextStationTime1(seconds);
+                }
+
+                // 이전 행의 역이 db에 저장된 beforeStation과 같다면 소요 시간을 저장
+                if (stationTimeList.get(i - 1)[2].equals(station.getBeforeStation1())) {
+                    Integer seconds = TimeUtil.convertString2Secs(stationTimeList.get(i - 1)[3]);
+                    station.updateBeforeStationTime1(seconds);
+                }
+                stationRepository.save(station);
+            }
+        }
+        List<Station> stationList = stationRepository.findAll();
+        for (Station station : stationList) {
+            if (station.getBeforeStationTime1() == null || station.getBeforeStationTime1() == 0) {
+                station.updateBeforeStationTime1(90);
+            }
+            if (station.getNextStationTime1() == null || station.getNextStationTime1() == 0) {
+                station.updateNextStationTime1(90);
+            }
+            stationRepository.save(station);
+        }
+    }
+
     public void addStation() throws IOException, InterruptedException {
-        CsvParsing festivalCSVParsing = new CsvParsing("file path");
+        CsvParsing festivalCSVParsing = new CsvParsing("file path", "\t");
         String[] line = null;
 
         int lineCount = 0;
@@ -123,7 +194,7 @@ public class StationService {
     }
 
     public void insertRelatedStation() throws IOException, InterruptedException {
-        CsvParsing festivalCSVParsing = new CsvParsing("file path");
+        CsvParsing festivalCSVParsing = new CsvParsing("file path", "\t");
         String[] line = null;
         int lineCount = 0;
         while ((line = festivalCSVParsing.nextRead()) != null) {

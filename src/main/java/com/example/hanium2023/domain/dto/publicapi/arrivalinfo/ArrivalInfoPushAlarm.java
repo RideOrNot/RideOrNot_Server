@@ -1,14 +1,11 @@
-package com.example.hanium2023.domain.dto.arrivalinfo;
+package com.example.hanium2023.domain.dto.publicapi.arrivalinfo;
 
 
 import lombok.Data;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-
 @Data
-public class ArrivalInfoPushAlarmResponse {
-    long arrivalTime;
+public class ArrivalInfoPushAlarm {
+    int arrivalTime;
     long movingTime;
     String direction;
     String lineId;
@@ -19,8 +16,8 @@ public class ArrivalInfoPushAlarmResponse {
     String stationName;
     String arrivalMessage2;
     String arrivalMessage3;
-
-    public ArrivalInfoPushAlarmResponse(ArrivalInfoApiResult apiResult) {
+    String createdAt;
+    public ArrivalInfoPushAlarm(ArrivalInfoApiResult apiResult) {
         this.arrivalTime = apiResult.getArrivalTime();
         this.direction = apiResult.getDirection();
         this.lineId = apiResult.getLineId();
@@ -28,5 +25,8 @@ public class ArrivalInfoPushAlarmResponse {
         this.stationName = apiResult.getStationName();
         this.arrivalMessage2 = apiResult.getArrivalMessage2();
         this.arrivalMessage3 = apiResult.getArrivalMessage3();
+        this.createdAt = apiResult.getCreatedAt();
     }
+
+
 }

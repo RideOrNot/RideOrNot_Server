@@ -20,6 +20,7 @@ public class User {
 
     @Convert(converter = StringCryptoConverter.class)
     private String nickname;
+    private String email;
     private double walkingSpeed;
     private double runningSpeed;
     private double InitialWalkingSpeed;
@@ -27,6 +28,11 @@ public class User {
     private int ageRange;
     private int gender;
     private String password;
+    private String username;
+    private boolean success;
+    //private String role;
+    //private String provider;
+    //private String providerId;
     public void updateWalkingSpeed(double walkingSpeed){
         this.walkingSpeed = walkingSpeed;
     }
