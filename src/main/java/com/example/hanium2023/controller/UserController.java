@@ -4,6 +4,8 @@ import com.example.hanium2023.domain.dto.ressponse.Response;
 import com.example.hanium2023.domain.dto.user.UserAutoFeedBackResponse;
 import com.example.hanium2023.domain.dto.user.UserAutoFeedbackRequest;
 import com.example.hanium2023.domain.entity.BookMark;
+import com.example.hanium2023.domain.entity.User;
+import com.example.hanium2023.repository.UserRepository;
 import com.example.hanium2023.service.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
