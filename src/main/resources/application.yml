@@ -9,6 +9,16 @@ spring:
   database:
       encrypt:
         key: ${DB_ENCRYPT_KEY}
+  security:
+    oauth2:
+      client:
+        registration:
+          google: # /oauth2/authorization/google 이 주소를 동작하게 한다.
+            client-id: 342718976152-cqk9qo90dbulb3js9m114cfbuss02ii1.apps.googleusercontent.com #900575659421-p64cmjec2kee4hld0i9ekri5g581ufip.apps.googleusercontent.com
+            client-secret: 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 #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
+            scope:
+              - email
+              - profile
   redis:
     host: ${REDIS_HOST}
     port: ${REDIS_PORT}

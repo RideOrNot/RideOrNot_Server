@@ -22,7 +22,7 @@ public class UserDto {
     public UserDto(User user) {
         this.InitialRunningSpeed = user.getInitialRunningSpeed();
         this.InitialWalkingSpeed = user.getInitialWalkingSpeed();
-        this.userId = user.getUserId();
+        //this.userId = user.getUserId();
         this.runningSpeed = user.getRunningSpeed();
         this.walkingSpeed = user.getWalkingSpeed();
     }
