@@ -29,9 +29,10 @@ public class User {
     private int gender;
     private String password;
     private String username;
-    private String role;
-    private String provider;
-    private String providerId;
+    private boolean success;
+    //private String role;
+    //private String provider;
+    //private String providerId;
     public void updateWalkingSpeed(double walkingSpeed){
         this.walkingSpeed = walkingSpeed;
     }
@@ -47,8 +48,8 @@ public class User {
         this.password = password;
         this.username = username;
         this.email = email;
-        this.role = role;
-        this.provider = provider;
-        this.providerId = providerId;
+        //this.role = role;
+        //this.provider = provider;
+        //this.providerId = providerId;
     }
 }
