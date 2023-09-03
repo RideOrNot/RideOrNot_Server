@@ -50,14 +50,7 @@ public class StationService {
 
     public LocationInfoPushAlarmResponse getPushAlarmFromLocationInfo(String stationName, String exitName) {
         List<LocationInfoPushAlarm> locationInfoForPushAlarm = locationInfoService.getLocationInfoForPushAlarm(stationName, exitName);
-        for(LocationInfoPushAlarm l : locationInfoForPushAlarm){
-            System.out.println(l);
-        }
         LocationInfoPushAlarmResponse response = new LocationInfoPushAlarmResponse(locationInfoForPushAlarm);
-
-        for(LocationInfoPushAlarm l : response.getArrivalInfo()){
-            System.out.println(l);
-        }
         response.setCongestion(publicApiService.getCongestionForPushAlarm(stationName, exitName).getCongestionMessage());
         return response;
     }
