@@ -5,6 +5,7 @@ import com.example.hanium2023.domain.dto.publicapi.location.LocationInfoPushAlar
 import com.example.hanium2023.domain.dto.user.MovingSpeedInfo;
 import com.example.hanium2023.domain.dto.user.UserDto;
 import com.example.hanium2023.domain.entity.Station;
+import com.example.hanium2023.enums.DirectionCodeEnum;
 import com.example.hanium2023.enums.TrainStatusCodeEnum;
 import com.example.hanium2023.enums.MovingMessageEnum;
 import com.example.hanium2023.repository.StationRepository;
@@ -38,19 +39,47 @@ public class LocationInfoService {
         List<Station> stationList = stationRepository.findAllByStatnName(stationName);
         List<LocationInfoApiResult> locationInfoApiResultList = new ArrayList<>();
         for (Station s : stationList) {
-            locationInfoApiResultList.addAll(getLocationInfoFromPublicApi(s.getLine().getLineName()));
+            List<LocationInfoApiResult> apiResultList = getLocationInfoFromPublicApi(s.getLine().getLineName())
+                    .stream()
+                    .filter(result -> validLocationInfo(result, s)
+                    )
+                    .collect(Collectors.toList());
+            for(LocationInfoApiResult a : apiResultList){
+                System.out.println(a.toString());
+            }
+            locationInfoApiResultList.addAll(apiResultList);
         }
 
-        UserDto userDto = new UserDto(userRepository.findById(40L).get());
+        UserDto userDto = new UserDto(userRepository.findById(41L).get());
 
         return locationInfoApiResultList
                 .stream()
-                .filter(locationInfoApiResult -> locationInfoApiResult.getStationName().equals(stationName))
-                .filter(locationInfoApiResult -> locationInfoApiResult.getTrainStatusCode() == TrainStatusCodeEnum.DEPART_BEFORE_STATION.getCode())
+//                .filter(locationInfoApiResult -> locationInfoApiResult.getStationName().equals(stationName))
+//                .filter(locationInfoApiResult -> locationInfoApiResult.getTrainStatusCode() == TrainStatusCodeEnum.DEPART_BEFORE_STATION.getCode())
                 .map(LocationInfoPushAlarm::new)
                 .map(this::calculateArrivalTime)
                 .map(apiResult -> calculateMovingTime(apiResult, stationName, exitName, userDto))
                 .collect(Collectors.toList());
+    }
+
+    private boolean validLocationInfo(LocationInfoApiResult apiResult, Station s) {
+        if (apiResult.getStationName().equals(s.getStatnName()))
+//                &&
+//                (apiResult.getTrainStatusCode() == TrainStatusCodeEnum.DEPART_BEFORE_STATION.getCode()))
+            return true;
+        if (apiResult.getStationName().equals(s.getBeforeStation1())
+//                &&
+//                (apiResult.getTrainStatusCode() == TrainStatusCodeEnum.DEPART.getCode()) &&
+//                (apiResult.getDirection() == DirectionCodeEnum.DOWN_LINE.getCode())
+        )
+            return true;
+        if (apiResult.getStationName().equals(s.getNextStation1())
+//                &&
+//                (apiResult.getTrainStatusCode() == TrainStatusCodeEnum.DEPART.getCode()) &&
+//                (apiResult.getDirection() == DirectionCodeEnum.UP_LINE.getCode())
+        )
+            return true;
+        return false;
     }
 
     private LocationInfoPushAlarm calculateArrivalTime(LocationInfoPushAlarm locationInfoPushAlarm) {
@@ -59,7 +88,7 @@ public class LocationInfoService {
 
         LocalDateTime currentTime = TimeUtil.getCurrentTime();
         LocalDateTime targetTime = TimeUtil.getTimeFromString(locationInfoPushAlarm.getCreatedAt());
-        int timeGap = (int) TimeUtil.getDuration(currentTime,targetTime.plusSeconds(adjacentStationTime)).getSeconds();
+        int timeGap = (int) TimeUtil.getDuration(currentTime, targetTime.plusSeconds(adjacentStationTime)).getSeconds();
         locationInfoPushAlarm.setArrivalTime(timeGap);
         return locationInfoPushAlarm;
     }
