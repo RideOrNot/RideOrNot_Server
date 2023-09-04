@@ -73,26 +73,15 @@ public class LocationInfoService {
 //            apiResult.setStationName(s.getNextStation1());
 //            return true;
 //        }
-        if (validateStationName(s.getStatnName(), apiResult.getStationName()))
-//                &&
-//                (apiResult.getTrainStatusCode() == TrainStatusCodeEnum.DEPART_BEFORE_STATION.getCode()))
-        {
+        if (validateStationName(s.getStatnName(), apiResult.getStationName())) {
             apiResult.setStationName(s.getStatnName());
             return true;
         }
-        if (validateStationName(s.getBeforeStation1(), apiResult.getStationName()))
-//                &&
-//                (apiResult.getTrainStatusCode() == TrainStatusCodeEnum.DEPART.getCode()) &&
-//                (apiResult.getDirection() == DirectionCodeEnum.DOWN_LINE.getCode()))
-        {
+        if (validateStationName(s.getBeforeStation1(), apiResult.getStationName())) {
             apiResult.setStationName(s.getBeforeStation1());
             return true;
         }
-        if (validateStationName(s.getNextStation1(), apiResult.getStationName()))
-//                &&
-//                (apiResult.getTrainStatusCode() == TrainStatusCodeEnum.DEPART.getCode()) &&
-//                (apiResult.getDirection() == DirectionCodeEnum.UP_LINE.getCode()))
-        {
+        if (validateStationName(s.getNextStation1(), apiResult.getStationName())){
             apiResult.setStationName(s.getNextStation1());
             return true;
         }
@@ -131,7 +120,7 @@ public class LocationInfoService {
         return locationInfoPushAlarm;
     }
 
-    public List<LocationInfoApiResult> getLocationInfoFromPublicApi(String lineName) {
+    private List<LocationInfoApiResult> getLocationInfoFromPublicApi(String lineName) {
         JSONObject apiResultJsonObject = publicApiService.getApiResult(publicApiService.getLocationApiUrl(lineName));
         Optional<JSONArray> jsonArray = Optional.ofNullable((JSONArray) apiResultJsonObject.get("realtimePositionList"));
         List<LocationInfoApiResult> locationInfoApiResult = new ArrayList<>();
