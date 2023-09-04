@@ -6,8 +6,8 @@ import com.example.hanium2023.domain.dto.user.MovingSpeedInfo;
 import com.example.hanium2023.domain.dto.user.UserDto;
 import com.example.hanium2023.domain.entity.Station;
 import com.example.hanium2023.enums.DirectionCodeEnum;
-import com.example.hanium2023.enums.TrainStatusCodeEnum;
 import com.example.hanium2023.enums.MovingMessageEnum;
+import com.example.hanium2023.enums.TrainStatusCodeEnum;
 import com.example.hanium2023.repository.StationRepository;
 import com.example.hanium2023.repository.UserRepository;
 import com.example.hanium2023.util.JsonUtil;
@@ -18,9 +18,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -41,12 +39,9 @@ public class LocationInfoService {
         for (Station s : stationList) {
             List<LocationInfoApiResult> apiResultList = getLocationInfoFromPublicApi(s.getLine().getLineName())
                     .stream()
-                    .filter(result -> validLocationInfo(result, s)
-                    )
+                    .filter(result -> validateLocationInfo(result, s))
                     .collect(Collectors.toList());
-            for(LocationInfoApiResult a : apiResultList){
-                System.out.println(a.toString());
-            }
+
             locationInfoApiResultList.addAll(apiResultList);
         }
 
@@ -54,31 +49,74 @@ public class LocationInfoService {
 
         return locationInfoApiResultList
                 .stream()
-//                .filter(locationInfoApiResult -> locationInfoApiResult.getStationName().equals(stationName))
-//                .filter(locationInfoApiResult -> locationInfoApiResult.getTrainStatusCode() == TrainStatusCodeEnum.DEPART_BEFORE_STATION.getCode())
                 .map(LocationInfoPushAlarm::new)
                 .map(this::calculateArrivalTime)
                 .map(apiResult -> calculateMovingTime(apiResult, stationName, exitName, userDto))
                 .collect(Collectors.toList());
     }
 
-    private boolean validLocationInfo(LocationInfoApiResult apiResult, Station s) {
-        if (apiResult.getStationName().equals(s.getStatnName()))
+    private boolean validateLocationInfo(LocationInfoApiResult apiResult, Station s) {
+//        if (validateStationName(s.getStatnName(), apiResult.getStationName()) &&
+//                (apiResult.getTrainStatusCode() == TrainStatusCodeEnum.DEPART_BEFORE_STATION.getCode())) {
+//            apiResult.setStationName(s.getStatnName());
+//            return true;
+//        }
+//        if (validateStationName(s.getBeforeStation1(), apiResult.getStationName()) &&
+//                (apiResult.getTrainStatusCode() == TrainStatusCodeEnum.DEPART.getCode()) &&
+//                (apiResult.getDirection() == DirectionCodeEnum.DOWN_LINE.getCode())) {
+//            apiResult.setStationName(s.getBeforeStation1());
+//            return true;
+//        }
+//        if (validateStationName(s.getNextStation1(), apiResult.getStationName()) &&
+//                (apiResult.getTrainStatusCode() == TrainStatusCodeEnum.DEPART.getCode()) &&
+//                (apiResult.getDirection() == DirectionCodeEnum.UP_LINE.getCode())) {
+//            apiResult.setStationName(s.getNextStation1());
+//            return true;
+//        }
+        if (validateStationName(s.getStatnName(), apiResult.getStationName()))
 //                &&
 //                (apiResult.getTrainStatusCode() == TrainStatusCodeEnum.DEPART_BEFORE_STATION.getCode()))
+        {
+            apiResult.setStationName(s.getStatnName());
             return true;
-        if (apiResult.getStationName().equals(s.getBeforeStation1())
+        }
+        if (validateStationName(s.getBeforeStation1(), apiResult.getStationName()))
 //                &&
 //                (apiResult.getTrainStatusCode() == TrainStatusCodeEnum.DEPART.getCode()) &&
-//                (apiResult.getDirection() == DirectionCodeEnum.DOWN_LINE.getCode())
-        )
+//                (apiResult.getDirection() == DirectionCodeEnum.DOWN_LINE.getCode()))
+        {
+            apiResult.setStationName(s.getBeforeStation1());
             return true;
-        if (apiResult.getStationName().equals(s.getNextStation1())
+        }
+        if (validateStationName(s.getNextStation1(), apiResult.getStationName()))
 //                &&
 //                (apiResult.getTrainStatusCode() == TrainStatusCodeEnum.DEPART.getCode()) &&
-//                (apiResult.getDirection() == DirectionCodeEnum.UP_LINE.getCode())
-        )
+//                (apiResult.getDirection() == DirectionCodeEnum.UP_LINE.getCode()))
+        {
+            apiResult.setStationName(s.getNextStation1());
             return true;
+        }
+        return false;
+    }
+
+    private boolean validateStationName(String dbStationName, String apiStationName) {
+        if (dbStationName.equals(apiStationName)) {
+            return true;
+        } else if (apiStationName.startsWith(dbStationName + "(") && apiStationName.endsWith(")")) {
+            return true;
+        } else {
+            int indexOpen = apiStationName.indexOf("(");
+            int indexClose = apiStationName.indexOf(")");
+
+            if (indexOpen > 0 && indexClose > indexOpen) {
+                String prefix = apiStationName.substring(0, indexOpen);
+                String suffix = apiStationName.substring(indexClose + 1);
+
+                if (dbStationName.equals(prefix) && suffix.length() > 0) {
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
