@@ -16,6 +16,7 @@ public class LocationInfoPushAlarm {
     String stationName;
     String trainStatus;
     String createdAt;
+    int trainNumber;
 
     public LocationInfoPushAlarm(LocationInfoApiResult apiResult) {
         this.direction = apiResult.getDirection() == 0 ? "상행" : "하행";
@@ -24,6 +25,7 @@ public class LocationInfoPushAlarm {
         this.stationName = apiResult.getStationName();
         this.destination = apiResult.getLastStationName();
         this.createdAt = apiResult.getCreatedAt();
+        this.trainNumber = apiResult.getTrainNumber();
     }
 
     @Override
