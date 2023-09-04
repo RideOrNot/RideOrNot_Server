@@ -1,6 +1,6 @@
 package com.example.hanium2023.controller;
 
-import com.example.hanium2023.config.auth.PrincipalDetails;
+//import com.example.hanium2023.config.auth.PrincipalDetails;
 import com.example.hanium2023.domain.entity.User;
 import com.example.hanium2023.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;

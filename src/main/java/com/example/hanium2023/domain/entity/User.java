@@ -1,10 +1,7 @@
 package com.example.hanium2023.domain.entity;
 
 import com.example.hanium2023.util.converter.StringCryptoConverter;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import javax.persistence.*;
 
@@ -13,6 +10,7 @@ import javax.persistence.*;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@Data
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,5 +37,13 @@ public class User {
 
     public void updateRunningSpeed(double runningSpeed){
         this.runningSpeed = runningSpeed;
+    }
+
+    public User(String nickname, String username, String email){
+        //this.userId = userId;
+        this.nickname = nickname;
+        this.username = username;
+        //this.password = password;
+        this.email = email;
     }
 }
