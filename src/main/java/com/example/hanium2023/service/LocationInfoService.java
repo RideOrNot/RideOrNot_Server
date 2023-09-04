@@ -56,35 +56,37 @@ public class LocationInfoService {
     }
 
     private boolean validateLocationInfo(LocationInfoApiResult apiResult, Station s) {
-//        if (validateStationName(s.getStatnName(), apiResult.getStationName()) &&
-//                (apiResult.getTrainStatusCode() == TrainStatusCodeEnum.DEPART_BEFORE_STATION.getCode())) {
-//            apiResult.setStationName(s.getStatnName());
-//            return true;
-//        }
-//        if (validateStationName(s.getBeforeStation1(), apiResult.getStationName()) &&
-//                (apiResult.getTrainStatusCode() == TrainStatusCodeEnum.DEPART.getCode()) &&
-//                (apiResult.getDirection() == DirectionCodeEnum.DOWN_LINE.getCode())) {
-//            apiResult.setStationName(s.getBeforeStation1());
-//            return true;
-//        }
-//        if (validateStationName(s.getNextStation1(), apiResult.getStationName()) &&
-//                (apiResult.getTrainStatusCode() == TrainStatusCodeEnum.DEPART.getCode()) &&
-//                (apiResult.getDirection() == DirectionCodeEnum.UP_LINE.getCode())) {
-//            apiResult.setStationName(s.getNextStation1());
-//            return true;
-//        }
-        if (validateStationName(s.getStatnName(), apiResult.getStationName())) {
+        if (validateStationName(s.getStatnName(), apiResult.getStationName()) &&
+                ((apiResult.getTrainStatusCode() == TrainStatusCodeEnum.DEPART_BEFORE_STATION.getCode()) ||
+                        (apiResult.getTrainStatusCode() == TrainStatusCodeEnum.ENTER.getCode()) ||
+                        (apiResult.getTrainStatusCode() == TrainStatusCodeEnum.ARRIVE.getCode()))) {
             apiResult.setStationName(s.getStatnName());
             return true;
         }
-        if (validateStationName(s.getBeforeStation1(), apiResult.getStationName())) {
+        if (validateStationName(s.getBeforeStation1(), apiResult.getStationName()) &&
+                (apiResult.getTrainStatusCode() == TrainStatusCodeEnum.DEPART.getCode()) &&
+                (apiResult.getDirection() == DirectionCodeEnum.DOWN_LINE.getCode())) {
             apiResult.setStationName(s.getBeforeStation1());
             return true;
         }
-        if (validateStationName(s.getNextStation1(), apiResult.getStationName())){
+        if (validateStationName(s.getNextStation1(), apiResult.getStationName()) &&
+                (apiResult.getTrainStatusCode() == TrainStatusCodeEnum.DEPART.getCode()) &&
+                (apiResult.getDirection() == DirectionCodeEnum.UP_LINE.getCode())) {
             apiResult.setStationName(s.getNextStation1());
             return true;
         }
+//        if (validateStationName(s.getStatnName(), apiResult.getStationName())) {
+//            apiResult.setStationName(s.getStatnName());
+//            return true;
+//        }
+//        if (validateStationName(s.getBeforeStation1(), apiResult.getStationName())) {
+//            apiResult.setStationName(s.getBeforeStation1());
+//            return true;
+//        }
+//        if (validateStationName(s.getNextStation1(), apiResult.getStationName())){
+//            apiResult.setStationName(s.getNextStation1());
+//            return true;
+//        }
         return false;
     }
 
