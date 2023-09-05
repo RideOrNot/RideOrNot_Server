@@ -45,7 +45,7 @@ public class LocationInfoApiResult {
     private Integer isLastTrain;
 
     @JsonProperty("trainNo")
-    private Integer trainNumber;
+    private String trainNumber;
 
     @Override
     public String toString() {

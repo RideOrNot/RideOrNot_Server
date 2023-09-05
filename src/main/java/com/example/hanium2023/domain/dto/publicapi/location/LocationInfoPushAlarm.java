@@ -16,7 +16,7 @@ public class LocationInfoPushAlarm {
     String stationName;
     String trainStatus;
     String createdAt;
-    int trainNumber;
+    String trainNumber;
 
     public LocationInfoPushAlarm(LocationInfoApiResult apiResult) {
         this.direction = apiResult.getDirection() == 0 ? "상행" : "하행";
