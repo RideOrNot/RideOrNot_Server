@@ -24,6 +24,7 @@ public class AuthService { //클라이언트로부터 받은 구글 아이디 �
     public AuthService(UserRepository userRepository, JwtTokenProvider jwtTokenProvider) {
         this.userRepository = userRepository;
         this.jwtTokenProvider = jwtTokenProvider; // JwtTokenProvider 주입
+
     }
 
     public String verifyGoogleIdToken(String googleIdToken) throws GeneralSecurityException, IOException {
@@ -35,24 +36,23 @@ public class AuthService { //클라이언트로부터 받은 구글 아이디 �
             GoogleIdToken idToken = verifier.verify(googleIdToken);
             System.out.println(idToken);
 
-            if (true){//idToken != null) {
+            if (idToken != null) { //true){
                 // 검증된 토큰의 payload에서 이메일 정보를 추출
-                //GoogleIdToken.Payload payload = idToken.getPayload(); //nullPointException
-                //String email = payload.getEmail();
-                String email = "aaa@naver.com";
+                GoogleIdToken.Payload payload = idToken.getPayload(); //nullPointException
+                String email = payload.getEmail();
 
                 // UserRepository를 사용하여 DB에서 해당 이메일의 유저 정보를 조회
                 User existingUser = userRepository.findByEmail(email);
+                String jwtToken = jwtTokenProvider.createToken(email);// JwtTokenProvider를 사용하여 JWT 토큰 생성
                 if (existingUser != null) {
                     // 이미 등록된 유저 처리 로직
+                    System.out.println("JWT 토큰: " + jwtToken);
                     System.out.println("이미 등록된 유저");
-                    //return false;
+                    return jwtToken;
                 } else {
                     // 신규 유저 처리 로직
-                    //String fullName = (String) payload.get("name");
-                    String fullName = "seungho";
-                    //String firstName = (String) payload.get("given_name");
-                    String firstName = "s";
+                    String fullName = (String) payload.get("name");
+                    String firstName = (String) payload.get("given_name");
 
                     User newUser = User.builder()
                             .nickname(firstName)
@@ -62,22 +62,19 @@ public class AuthService { //클라이언트로부터 받은 구글 아이디 �
                     userRepository.save(newUser);
 
                     // JWT 토큰 생성 구글 토큰 정보 추출해야 사용 가능
-                    String jwtToken = jwtTokenProvider.createToken(fullName);//email); // JwtTokenProvider를 사용하여 JWT 토큰 생성
 
                     System.out.println("JWT 토큰: " + jwtToken);
-
                     System.out.println("신규 유저 처리 완료");
                     return jwtToken; // JWT 토큰 반환
                 }
             } else {
                 System.out.println("Invalid ID token.");
-                //return false; // 검증 실패 시 false를 리턴
+                return null;
             }
         } catch (GeneralSecurityException | IOException e) {
             System.out.println("Token verification failed: " + e.getMessage());
-            //return false; // 검증 실패 시 false를 리턴
+            return null;
         }
-        return null;
     }
 }
 

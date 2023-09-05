@@ -25,9 +25,9 @@ public class User {
     private double InitialRunningSpeed;
     private int ageRange;
     private int gender;
-    private String password;
     private String username;
-    private boolean success;
+    //private String password;
+    //private boolean success;
     //private String role;
     //private String provider;
     //private String providerId;
@@ -39,11 +39,11 @@ public class User {
         this.runningSpeed = runningSpeed;
     }
 
-    public User(String nickname, String username, String email){
+    /*public User(String nickname, String username, String email){
         //this.userId = userId;
         this.nickname = nickname;
         this.username = username;
         //this.password = password;
         this.email = email;
-    }
+    }*/
 }
