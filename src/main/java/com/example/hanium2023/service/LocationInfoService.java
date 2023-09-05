@@ -55,39 +55,33 @@ public class LocationInfoService {
                 .collect(Collectors.toList());
     }
 
-    private boolean validateLocationInfo(LocationInfoApiResult apiResult, Station s) {
-        if (validateStationName(s.getStatnName(), apiResult.getStationName()) &&
+    private boolean validateLocationInfo(LocationInfoApiResult apiResult, Station station) {
+        if (isAtCurrentStation(apiResult, station) &&
                 ((apiResult.getTrainStatusCode() == TrainStatusCodeEnum.DEPART_BEFORE_STATION.getCode()) ||
-                        (apiResult.getTrainStatusCode() == TrainStatusCodeEnum.ENTER.getCode()) ||
                         (apiResult.getTrainStatusCode() == TrainStatusCodeEnum.ARRIVE.getCode()))) {
-            apiResult.setStationName(s.getStatnName());
+            apiResult.setStationName(station.getStatnName());
             return true;
         }
-        if (validateStationName(s.getBeforeStation1(), apiResult.getStationName()) &&
-                (apiResult.getTrainStatusCode() == TrainStatusCodeEnum.DEPART.getCode()) &&
-                (apiResult.getDirection() == DirectionCodeEnum.DOWN_LINE.getCode())) {
-            apiResult.setStationName(s.getBeforeStation1());
+        if (isAtNearStation(apiResult, station) && apiResult.getTrainStatusCode() == TrainStatusCodeEnum.ARRIVE.getCode()) {
+            apiResult.setStationName(station.getStatnName());
+            apiResult.setTrainStatusCode(TrainStatusCodeEnum.ARRIVE_BEFORE_STATION.getCode());
             return true;
         }
-        if (validateStationName(s.getNextStation1(), apiResult.getStationName()) &&
-                (apiResult.getTrainStatusCode() == TrainStatusCodeEnum.DEPART.getCode()) &&
-                (apiResult.getDirection() == DirectionCodeEnum.UP_LINE.getCode())) {
-            apiResult.setStationName(s.getNextStation1());
+        if (isAtNearStation(apiResult, station) && apiResult.getTrainStatusCode() == TrainStatusCodeEnum.DEPART.getCode()) {
+            apiResult.setStationName(station.getStatnName());
+            apiResult.setTrainStatusCode(TrainStatusCodeEnum.DEPART_BEFORE_STATION.getCode());
             return true;
         }
-//        if (validateStationName(s.getStatnName(), apiResult.getStationName())) {
-//            apiResult.setStationName(s.getStatnName());
-//            return true;
-//        }
-//        if (validateStationName(s.getBeforeStation1(), apiResult.getStationName())) {
-//            apiResult.setStationName(s.getBeforeStation1());
-//            return true;
-//        }
-//        if (validateStationName(s.getNextStation1(), apiResult.getStationName())){
-//            apiResult.setStationName(s.getNextStation1());
-//            return true;
-//        }
         return false;
+    }
+
+    private boolean isAtCurrentStation(LocationInfoApiResult apiResult, Station station) {
+        return validateStationName(station.getStatnName(), apiResult.getStationName());
+    }
+
+    private boolean isAtNearStation(LocationInfoApiResult apiResult, Station station) {
+        return (validateStationName(station.getNextStation1(), apiResult.getStationName()) && (apiResult.getDirection() == DirectionCodeEnum.UP_LINE.getCode())) ||
+                (validateStationName(station.getBeforeStation1(), apiResult.getStationName()) && (apiResult.getDirection() == DirectionCodeEnum.DOWN_LINE.getCode()));
     }
 
     private boolean validateStationName(String dbStationName, String apiStationName) {
