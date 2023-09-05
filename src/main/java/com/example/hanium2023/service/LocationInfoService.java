@@ -16,6 +16,7 @@ import com.example.hanium2023.util.TimeUtil;
 import lombok.RequiredArgsConstructor;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -35,30 +36,26 @@ public class LocationInfoService {
 
     public List<LocationInfoPushAlarm> getLocationInfoForPushAlarm(String stationName, String exitName) {
         List<Station> stationList = stationRepository.findAllByStatnName(stationName);
-        List<LocationInfoApiResult> locationInfoApiResultList = new ArrayList<>();
-        for (Station s : stationList) {
-            List<LocationInfoApiResult> apiResultList = getLocationInfoFromPublicApi(s.getLine().getLineName())
-                    .stream()
-                    .filter(result -> validateLocationInfo(result, s))
-                    .collect(Collectors.toList());
-
-            locationInfoApiResultList.addAll(apiResultList);
-        }
+        List<LocationInfoPushAlarm> locationInfoPushAlarmList = new ArrayList<>();
 
         UserDto userDto = new UserDto(userRepository.findById(41L).get());
 
-        return locationInfoApiResultList
-                .stream()
-                .map(LocationInfoPushAlarm::new)
-                .map(this::calculateArrivalTime)
-                .map(apiResult -> calculateMovingTime(apiResult, stationName, exitName, userDto))
-                .collect(Collectors.toList());
+        for (Station station : stationList) {
+            locationInfoPushAlarmList.addAll(getLocationInfoFromPublicApi(station.getLine().getLineName())
+                    .stream()
+                    .filter(result -> filterLocationInfo(result, station))
+                    .map(LocationInfoPushAlarm::new)
+                    .map(apiResult -> addDestinationInfo(apiResult, station))
+                    .map(apiResult -> calculateArrivalTime(apiResult, station))
+                    .map(apiResult -> calculateMovingTime(apiResult, stationName, exitName, userDto))
+                    .collect(Collectors.toList()));
+        }
+
+        return locationInfoPushAlarmList;
     }
 
-    private boolean validateLocationInfo(LocationInfoApiResult apiResult, Station station) {
-        if (isAtCurrentStation(apiResult, station) &&
-                ((apiResult.getTrainStatusCode() == TrainStatusCodeEnum.DEPART_BEFORE_STATION.getCode()) ||
-                        (apiResult.getTrainStatusCode() == TrainStatusCodeEnum.ARRIVE.getCode()))) {
+    private boolean filterLocationInfo(LocationInfoApiResult apiResult, Station station) {
+        if (isAtCurrentStation(apiResult, station) && (apiResult.getTrainStatusCode() == TrainStatusCodeEnum.DEPART_BEFORE_STATION.getCode())) {
             apiResult.setStationName(station.getStatnName());
             return true;
         }
@@ -96,7 +93,6 @@ public class LocationInfoService {
             if (indexOpen > 0 && indexClose > indexOpen) {
                 String prefix = apiStationName.substring(0, indexOpen);
                 String suffix = apiStationName.substring(indexClose + 1);
-
                 if (dbStationName.equals(prefix) && suffix.length() > 0) {
                     return true;
                 }
@@ -105,26 +101,29 @@ public class LocationInfoService {
         return false;
     }
 
-    private LocationInfoPushAlarm calculateArrivalTime(LocationInfoPushAlarm locationInfoPushAlarm) {
-        Station station = stationRepository.findByStatnNameAndLine_LineId(locationInfoPushAlarm.getStationName(), Integer.valueOf(locationInfoPushAlarm.getLineId()));
-        Integer adjacentStationTime = locationInfoPushAlarm.getDirection().equals("상행") ? station.getBeforeStationTime1() : station.getNextStationTime1();
-
-        LocalDateTime currentTime = TimeUtil.getCurrentTime();
-        LocalDateTime targetTime = TimeUtil.getTimeFromString(locationInfoPushAlarm.getCreatedAt());
-        int timeGap = (int) TimeUtil.getDuration(currentTime, targetTime.plusSeconds(adjacentStationTime)).getSeconds();
-        locationInfoPushAlarm.setArrivalTime(timeGap);
-        return locationInfoPushAlarm;
+    private LocationInfoPushAlarm addDestinationInfo(LocationInfoPushAlarm apiResult, Station station) {
+        String nextStation = apiResult.getDestination().equals(DirectionCodeEnum.UP_LINE.getDirection()) ? station.getBeforeStation1() : station.getNextStation1();
+        String currentStation = apiResult.getDestination();
+        apiResult.setDestination(currentStation + "행 - " + nextStation + "방면");
+        return apiResult;
     }
 
-    private List<LocationInfoApiResult> getLocationInfoFromPublicApi(String lineName) {
-        JSONObject apiResultJsonObject = publicApiService.getApiResult(publicApiService.getLocationApiUrl(lineName));
-        Optional<JSONArray> jsonArray = Optional.ofNullable((JSONArray) apiResultJsonObject.get("realtimePositionList"));
-        List<LocationInfoApiResult> locationInfoApiResult = new ArrayList<>();
-
-        if (jsonArray.isPresent()) {
-            locationInfoApiResult = JsonUtil.convertJsonArrayToDtoList(jsonArray.get(), LocationInfoApiResult.class);
+    private LocationInfoPushAlarm calculateArrivalTime(LocationInfoPushAlarm locationInfoPushAlarm, Station station) {
+        Integer adjacentStationTime = locationInfoPushAlarm.getDirection().equals("상행") ? station.getNextStationTime1() : station.getBeforeStationTime1();
+        LocalDateTime currentTime = TimeUtil.getCurrentTime();
+        int arrivalTime = 0;
+        if (locationInfoPushAlarm.getTrainStatus().equals(TrainStatusCodeEnum.DEPART_BEFORE_STATION.getStatus())) {
+            // api 딜레이 20초
+            LocalDateTime realDepartTime = TimeUtil.getTimeFromString(locationInfoPushAlarm.getCreatedAt()).minusSeconds(20);
+            arrivalTime = (int) TimeUtil.getDuration(currentTime, realDepartTime.plusSeconds(adjacentStationTime)).getSeconds();
+        } else if (locationInfoPushAlarm.getTrainStatus().equals(TrainStatusCodeEnum.ARRIVE_BEFORE_STATION.getStatus())) {
+            // api 딜레이 20초
+            LocalDateTime realDepartTime = TimeUtil.getTimeFromString(locationInfoPushAlarm.getCreatedAt()).plusSeconds(25);
+            // 문 개방 시간 20초
+            arrivalTime = (int) TimeUtil.getDuration(currentTime, realDepartTime.plusSeconds(20).plusSeconds(adjacentStationTime)).getSeconds();
         }
-        return locationInfoApiResult;
+        locationInfoPushAlarm.setArrivalTime(arrivalTime);
+        return locationInfoPushAlarm;
     }
 
     private LocationInfoPushAlarm calculateMovingTime(LocationInfoPushAlarm locationInfoPushAlarm, String stationName, String exitName, UserDto userDto) {
@@ -147,6 +146,18 @@ public class LocationInfoService {
 
         return locationInfoPushAlarm;
     }
+
+    private List<LocationInfoApiResult> getLocationInfoFromPublicApi(String lineName) {
+        JSONObject apiResultJsonObject = publicApiService.getApiResult(publicApiService.getLocationApiUrl(lineName));
+        Optional<JSONArray> jsonArray = Optional.ofNullable((JSONArray) apiResultJsonObject.get("realtimePositionList"));
+        List<LocationInfoApiResult> locationInfoApiResult = new ArrayList<>();
+
+        if (jsonArray.isPresent()) {
+            locationInfoApiResult = JsonUtil.convertJsonArrayToDtoList(jsonArray.get(), LocationInfoApiResult.class);
+        }
+        return locationInfoApiResult;
+    }
+
 
     private MovingSpeedInfo getMovingSpeedInfo(UserDto userDto, double minMovingSpeed) {
         MovingMessageEnum[] movingMessageEnums = MovingMessageEnum.getMovingMessageEnums();
