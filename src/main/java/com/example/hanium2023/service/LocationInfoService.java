@@ -16,7 +16,6 @@ import com.example.hanium2023.util.TimeUtil;
 import lombok.RequiredArgsConstructor;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -77,8 +76,8 @@ public class LocationInfoService {
     }
 
     private boolean isAtNearStation(LocationInfoApiResult apiResult, Station station) {
-        return (validateStationName(station.getNextStation1(), apiResult.getStationName()) && (apiResult.getDirection() == DirectionCodeEnum.UP_LINE.getCode())) ||
-                (validateStationName(station.getBeforeStation1(), apiResult.getStationName()) && (apiResult.getDirection() == DirectionCodeEnum.DOWN_LINE.getCode()));
+        return (validateStationName(station.getNextStation1(), apiResult.getStationName()) && (apiResult.getDirectionCode() == DirectionCodeEnum.UP_LINE.getCode())) ||
+                (validateStationName(station.getBeforeStation1(), apiResult.getStationName()) && (apiResult.getDirectionCode() == DirectionCodeEnum.DOWN_LINE.getCode()));
     }
 
     private boolean validateStationName(String dbStationName, String apiStationName) {
@@ -102,28 +101,28 @@ public class LocationInfoService {
     }
 
     private LocationInfoPushAlarm addDestinationInfo(LocationInfoPushAlarm apiResult, Station station) {
-        String nextStation = apiResult.getDestination().equals(DirectionCodeEnum.UP_LINE.getDirection()) ? station.getBeforeStation1() : station.getNextStation1();
+        String nextStation = (apiResult.getDirectionCode() == DirectionCodeEnum.UP_LINE.getCode()) ? station.getBeforeStation1() : station.getNextStation1();
         String currentStation = apiResult.getDestination();
         apiResult.setDestination(currentStation + "행 - " + nextStation + "방면");
         return apiResult;
     }
 
-    private LocationInfoPushAlarm calculateArrivalTime(LocationInfoPushAlarm locationInfoPushAlarm, Station station) {
-        Integer adjacentStationTime = locationInfoPushAlarm.getDirection().equals("상행") ? station.getNextStationTime1() : station.getBeforeStationTime1();
+    private LocationInfoPushAlarm calculateArrivalTime(LocationInfoPushAlarm apiResult, Station station) {
+        Integer adjacentStationTime = (apiResult.getDirectionCode() == DirectionCodeEnum.UP_LINE.getCode()) ? station.getNextStationTime1() : station.getBeforeStationTime1();
         LocalDateTime currentTime = TimeUtil.getCurrentTime();
         int arrivalTime = 0;
-        if (locationInfoPushAlarm.getTrainStatus().equals(TrainStatusCodeEnum.DEPART_BEFORE_STATION.getStatus())) {
+        if (apiResult.getTrainStatus().equals(TrainStatusCodeEnum.DEPART_BEFORE_STATION.getStatus())) {
             // api 딜레이 20초
-            LocalDateTime realDepartTime = TimeUtil.getTimeFromString(locationInfoPushAlarm.getCreatedAt()).minusSeconds(20);
+            LocalDateTime realDepartTime = TimeUtil.getTimeFromString(apiResult.getCreatedAt()).minusSeconds(20);
             arrivalTime = (int) TimeUtil.getDuration(currentTime, realDepartTime.plusSeconds(adjacentStationTime)).getSeconds();
-        } else if (locationInfoPushAlarm.getTrainStatus().equals(TrainStatusCodeEnum.ARRIVE_BEFORE_STATION.getStatus())) {
+        } else if (apiResult.getTrainStatus().equals(TrainStatusCodeEnum.ARRIVE_BEFORE_STATION.getStatus())) {
             // api 딜레이 20초
-            LocalDateTime realDepartTime = TimeUtil.getTimeFromString(locationInfoPushAlarm.getCreatedAt()).plusSeconds(25);
+            LocalDateTime realDepartTime = TimeUtil.getTimeFromString(apiResult.getCreatedAt()).plusSeconds(25);
             // 문 개방 시간 20초
             arrivalTime = (int) TimeUtil.getDuration(currentTime, realDepartTime.plusSeconds(20).plusSeconds(adjacentStationTime)).getSeconds();
         }
-        locationInfoPushAlarm.setArrivalTime(arrivalTime);
-        return locationInfoPushAlarm;
+        apiResult.setArrivalTime(arrivalTime);
+        return apiResult;
     }
 
     private LocationInfoPushAlarm calculateMovingTime(LocationInfoPushAlarm locationInfoPushAlarm, String stationName, String exitName, UserDto userDto) {
