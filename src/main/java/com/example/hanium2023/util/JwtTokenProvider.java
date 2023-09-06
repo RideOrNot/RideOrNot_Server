@@ -11,7 +11,7 @@ import java.util.Map;
 @Component
 public class JwtTokenProvider {
 
-    private String secretKey = "0123456789012345678901234567890123456789012"; // JWT 서명을 위한 비밀 키
+    private String secretKey = "00"; // JWT 서명을 위한 비밀 키
     private long validityInMilliseconds = 3600000; // 토큰의 유효 기간 (1시간)
 
     public String createToken(String username) {
