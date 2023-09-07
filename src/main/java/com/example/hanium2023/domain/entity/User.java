@@ -27,7 +27,6 @@ public class User {
     private double InitialRunningSpeed;
     private int ageRange;
     private int gender;
-    private String password;
     private String username;
     private boolean success;
     //private String role;
