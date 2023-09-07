@@ -45,8 +45,8 @@ public class LocationInfoService {
                     .filter(result -> filterLocationInfo(result, station))
                     .map(LocationInfoPushAlarm::new)
                     .map(apiResult -> addDestinationInfo(apiResult, station))
-                    .map(apiResult -> calculateArrivalTime(apiResult, station))
-                    .map(apiResult -> calculateMovingTime(apiResult, stationName, exitName, userDto))
+                    .filter(apiResult -> calculateArrivalTime(apiResult, station))
+                    .map(apiResult -> calculateMovingTime(apiResult, station, exitName, userDto))
                     .collect(Collectors.toList()));
         }
 
@@ -107,7 +107,7 @@ public class LocationInfoService {
         return apiResult;
     }
 
-    private LocationInfoPushAlarm calculateArrivalTime(LocationInfoPushAlarm apiResult, Station station) {
+    private boolean calculateArrivalTime(LocationInfoPushAlarm apiResult, Station station) {
         Integer adjacentStationTime = (apiResult.getDirectionCode() == DirectionCodeEnum.UP_LINE.getCode()) ? station.getNextStationTime1() : station.getBeforeStationTime1();
         LocalDateTime currentTime = TimeUtil.getCurrentTime();
         int arrivalTime = 0;
@@ -122,12 +122,12 @@ public class LocationInfoService {
             arrivalTime = (int) TimeUtil.getDuration(currentTime, realDepartTime.plusSeconds(20).plusSeconds(adjacentStationTime)).getSeconds();
         }
         apiResult.setArrivalTime(arrivalTime);
-        return apiResult;
+//        return apiResult;
+        return arrivalTime > 0;
     }
 
-    private LocationInfoPushAlarm calculateMovingTime(LocationInfoPushAlarm locationInfoPushAlarm, String stationName, String exitName, UserDto userDto) {
-        Integer stationId = redisUtil.getStationIdByStationNameAndLineId(stationName, Integer.valueOf(locationInfoPushAlarm.getLineId()));
-        double distance = redisUtil.getDistanceByStationIdAndExitName(stationId, exitName);
+    private LocationInfoPushAlarm calculateMovingTime(LocationInfoPushAlarm locationInfoPushAlarm, Station station, String exitName, UserDto userDto) {
+        double distance = redisUtil.getDistanceByStationIdAndExitName(station.getStationId(), exitName);
         double minMovingSpeed = distance / (double) locationInfoPushAlarm.getArrivalTime();
 
         MovingSpeedInfo movingSpeedInfo = getMovingSpeedInfo(userDto, minMovingSpeed);
