@@ -43,6 +43,7 @@ public class LocationInfoService {
             locationInfoPushAlarmList.addAll(getLocationInfoFromPublicApi(station.getLine().getLineName())
                     .stream()
                     .filter(result -> filterLocationInfo(result, station))
+                    .filter(result -> filterTerminus(result,station))
                     .map(LocationInfoPushAlarm::new)
                     .map(apiResult -> addDestinationInfo(apiResult, station))
                     .filter(apiResult -> calculateArrivalTime(apiResult, station))
@@ -71,6 +72,9 @@ public class LocationInfoService {
         return false;
     }
 
+    private boolean filterTerminus(LocationInfoApiResult apiResult, Station station) {
+        return !station.getStatnName().startsWith(apiResult.getLastStationName());
+    }
     private boolean isAtCurrentStation(LocationInfoApiResult apiResult, Station station) {
         return validateStationName(station.getStatnName(), apiResult.getStationName());
     }
