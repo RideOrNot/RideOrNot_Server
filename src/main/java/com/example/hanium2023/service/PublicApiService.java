@@ -4,9 +4,13 @@ import com.example.hanium2023.domain.dto.congestion.AvailableStationInfoApiResul
 import com.example.hanium2023.domain.dto.congestion.CongestionResponse;
 import com.example.hanium2023.domain.dto.congestion.PassengerByTimeResult;
 import com.example.hanium2023.domain.dto.congestion.PassengerPerDayResult;
+import com.example.hanium2023.domain.entity.ExitUserCountPerDay;
+import com.example.hanium2023.domain.entity.ExitUserCountPerTime;
 import com.example.hanium2023.domain.entity.Line;
 import com.example.hanium2023.domain.entity.Station;
 import com.example.hanium2023.enums.CongestionEnum;
+import com.example.hanium2023.repository.ExitUserCountPerDayRepository;
+import com.example.hanium2023.repository.ExitUserCountPerTimeRepository;
 import com.example.hanium2023.repository.LineRepository;
 import com.example.hanium2023.repository.StationRepository;
 import com.example.hanium2023.util.JsonUtil;
@@ -38,6 +42,8 @@ public class PublicApiService {
     private String skKey;
     private final LineRepository lineRepository;
     private final StationRepository stationRepository;
+    private final ExitUserCountPerTimeRepository exitUserCountPerTimeRepository;
+    private final ExitUserCountPerDayRepository exitUserCountPerDayRepository;
     private final int avgPassenger = 23058;
 
 
@@ -124,6 +130,7 @@ public class PublicApiService {
 
             //제공하지 않는 역의 경우 제공하지 않음을 리턴
             if (station.isEmpty()) return response;
+
             List<PassengerPerDayResult> passengerPerDayResult = getPassengerPerDayResult(station);
             List<PassengerByTimeResult> passengerByTimeResult = getPassengerByTimeResult(station);
             int totalUser = 0;
@@ -177,7 +184,7 @@ public class PublicApiService {
             if (station.isEmpty()) return response;
             List<PassengerPerDayResult> passengerPerDayResult = getPassengerPerDayResult(station);
             List<PassengerByTimeResult> passengerByTimeResult = getPassengerByTimeResult(station);
-            if(passengerByTimeResult == null || passengerPerDayResult == null ) return response;
+            if (passengerByTimeResult == null || passengerPerDayResult == null) return response;
             int totalUser = 0;
             for (PassengerPerDayResult result : passengerPerDayResult) {
                 if (result == null) continue;
@@ -210,48 +217,74 @@ public class PublicApiService {
         }
     }
 
-    private List<PassengerPerDayResult> getPassengerPerDayResult(Optional<Station> station){
+    private List<PassengerPerDayResult> getPassengerPerDayResult(Optional<Station> station) {
         try {
+            String dow = LocalDateTime.now()
+                    .getDayOfWeek()
+                    .toString()
+                    .toUpperCase()
+                    .substring(0, 3);
+            List<ExitUserCountPerDay> exitUserCountPerDays = exitUserCountPerDayRepository.findAllByStationAndDow(station.get(), dow);
+            if (!exitUserCountPerDays.isEmpty()){
+                ArrayList<PassengerPerDayResult> results = new ArrayList<>();
+                for (ExitUserCountPerDay exitUserCountPerDay : exitUserCountPerDays) {
+                    results.add(PassengerPerDayResult.of(exitUserCountPerDay));
+                }
+                return results;
+            }
+
             Calendar currentCalendar = Calendar.getInstance();
             currentCalendar.add(currentCalendar.DATE, -7);
             JSONObject passengerPerDay = SKApiUtil.getPassengerPerDayApiResult(
                     skKey,
                     station.get().getSKStationCode(),
-                    LocalDateTime.now()
-                            .getDayOfWeek()
-                            .toString()
-                            .toUpperCase()
-                            .substring(0, 3));
-
+                    dow);
             JSONObject passengerPerDayObject = (JSONObject) passengerPerDay.get("contents");
             Optional<JSONArray> passengerPerDayArray = Optional.ofNullable((JSONArray) passengerPerDayObject.get("stat"));
             List<PassengerPerDayResult> passengerPerDayResult = new ArrayList<>();
             if (passengerPerDayArray.isPresent()) {
                 passengerPerDayResult = new ArrayList<>(JsonUtil.convertJsonArrayToDtoList(passengerPerDayArray.get(), PassengerPerDayResult.class));
             }
+            for (PassengerPerDayResult perDayResult : passengerPerDayResult) {
+                exitUserCountPerDayRepository.save(perDayResult.toEntity(station.get(), dow));
+            }
             return passengerPerDayResult;
 
-        } catch (Exception e){
+        } catch (Exception e) {
             return null;
         }
     }
-    private List<PassengerByTimeResult> getPassengerByTimeResult(Optional<Station> station){
+
+    private List<PassengerByTimeResult> getPassengerByTimeResult(Optional<Station> station) {
         try {
             Calendar currentCalendar = Calendar.getInstance();
             currentCalendar.add(currentCalendar.DATE, -7);
+            String datetime = new SimpleDateFormat("yyyyMMdd").format(currentCalendar.getTime());
+
+            List<ExitUserCountPerTime> exitUserCountPerTimes = exitUserCountPerTimeRepository.findAllByStationAndDatetimeStartsWith(station.get(), datetime);
+            if (!exitUserCountPerTimes.isEmpty()){
+                ArrayList<PassengerByTimeResult> results = new ArrayList<>();
+                for (ExitUserCountPerTime exitUserCountPerTime : exitUserCountPerTimes) {
+                    results.add(PassengerByTimeResult.of(exitUserCountPerTime));
+                }
+                return results;
+            }
             //현재 시간을 기준으로 일주일 전의 특정 지하철역의 특정 출구의 특정 시간의 통행자수에 대한 정보를 조회
             JSONObject passengerByTime = SKApiUtil.getPassengerByTimeApiResult(
                     skKey,
                     station.get().getSKStationCode(),
-                    new SimpleDateFormat("yyyyMMdd").format(currentCalendar.getTime()));
+                    datetime);
             JSONObject passengerByTimeObject = (JSONObject) passengerByTime.get("contents");
             Optional<JSONArray> passengerByTimeArray = Optional.ofNullable((JSONArray) passengerByTimeObject.get("raw"));
             List<PassengerByTimeResult> passengerByTimeResult = new ArrayList<>();
             if (passengerByTimeArray.isPresent()) {
                 passengerByTimeResult = new ArrayList<>(JsonUtil.convertJsonArrayToDtoList(passengerByTimeArray.get(), PassengerByTimeResult.class));
             }
+            for (PassengerByTimeResult byTimeResult : passengerByTimeResult) {
+                exitUserCountPerTimeRepository.save(byTimeResult.toEntity(station.get()));
+            }
             return passengerByTimeResult;
-        } catch (Exception e){
+        } catch (Exception e) {
             return null;
         }
     }
