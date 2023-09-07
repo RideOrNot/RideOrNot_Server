@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 public class LocationInfoApiResult {
 //    (0 : 상행/내선, 1 : 하행/외선)
     @JsonProperty("updnLine")
-    private Integer direction;
+    private Integer directionCode;
 
     @JsonProperty("subwayNm")
     private String lineName;
@@ -44,10 +44,13 @@ public class LocationInfoApiResult {
     @JsonProperty("lstcarAt")
     private Integer isLastTrain;
 
+    @JsonProperty("trainNo")
+    private String trainNumber;
+
     @Override
     public String toString() {
         return "LocationInfoApiResult{" +
-                "direction=" + direction +
+                "direction=" + directionCode +
                 ", lineName='" + lineName + '\'' +
                 ", lineId=" + lineId +
                 ", createdAt='" + createdAt + '\'' +

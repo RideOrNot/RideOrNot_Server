@@ -6,9 +6,11 @@ import com.example.hanium2023.domain.dto.station.ArrivalInfoResponse;
 import com.example.hanium2023.domain.dto.station.ArrivalInfoPushAlarmResponse;
 import com.example.hanium2023.domain.dto.station.LocationInfoPushAlarmResponse;
 import com.example.hanium2023.domain.dto.station.StationInfoPageResponse;
+import com.example.hanium2023.domain.entity.CallHistory;
 import com.example.hanium2023.domain.entity.Line;
 import com.example.hanium2023.domain.entity.Station;
 import com.example.hanium2023.domain.entity.StationExit;
+import com.example.hanium2023.repository.CallHistoryRepository;
 import com.example.hanium2023.repository.LineRepository;
 import com.example.hanium2023.repository.StationExitRepository;
 import com.example.hanium2023.repository.StationRepository;
@@ -23,10 +25,8 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Optional;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -40,6 +40,7 @@ public class StationService {
     private final ArrivalInfoService arrivalInfoService;
     private final PublicApiService publicApiService;
     private final LocationInfoService locationInfoService;
+    private final CallHistoryRepository callHistoryRepository;
 
 
     public ArrivalInfoPushAlarmResponse getPushAlarmFromArrivalInfo(String stationName, String exitName) {
@@ -50,14 +51,22 @@ public class StationService {
 
     public LocationInfoPushAlarmResponse getPushAlarmFromLocationInfo(String stationName, String exitName) {
         List<LocationInfoPushAlarm> locationInfoForPushAlarm = locationInfoService.getLocationInfoForPushAlarm(stationName, exitName);
-        for(LocationInfoPushAlarm l : locationInfoForPushAlarm){
-            System.out.println(l);
+        for (LocationInfoPushAlarm l : locationInfoForPushAlarm) {
+            CallHistory callHistory = CallHistory.builder()
+                    .arrivalTime(l.getArrivalTime())
+                    .movingTime(l.getMovingTime())
+                    .direction(l.getDirection())
+                    .lineId(l.getLineId())
+                    .destination(l.getDestination())
+                    .message(l.getMessage())
+                    .stationName(l.getStationName())
+                    .trainStatus(l.getTrainStatus())
+                    .createdAt(l.getCreatedAt())
+                    .loggedAt(TimeUtil.getCurrentTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd a hh:mm:ss", Locale.KOREAN)))
+                    .build();
+            callHistoryRepository.save(callHistory);
         }
         LocationInfoPushAlarmResponse response = new LocationInfoPushAlarmResponse(locationInfoForPushAlarm);
-
-        for(LocationInfoPushAlarm l : response.getArrivalInfo()){
-            System.out.println(l);
-        }
         response.setCongestion(publicApiService.getCongestionForPushAlarm(stationName, exitName).getCongestionMessage());
         return response;
     }

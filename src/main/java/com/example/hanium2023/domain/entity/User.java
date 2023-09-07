@@ -1,6 +1,6 @@
 package com.example.hanium2023.domain.entity;
 
-import com.example.hanium2023.util.converter.StringCryptoConverter;
+import com.example.hanium2023.util.encryption.converter.StringCryptoConverter;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -27,9 +27,7 @@ public class User {
     private double InitialRunningSpeed;
     private int ageRange;
     private int gender;
-    private String password;
     private String username;
-    private boolean success;
     //private String role;
     //private String provider;
     //private String providerId;

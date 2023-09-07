@@ -60,7 +60,7 @@ public class ArrivalInfoService {
         Predicate<ArrivalInfoApiResult> arrivalInfoFilter = removeTooFarArrivalInfoFilter.and(this::removeInvalidArrivalInfo);
         List<ArrivalInfoApiResult> arrivalInfoApiResultList = getArrivalInfoFromPublicApi(stationName, arrivalInfoFilter);
 
-        UserDto userDto = new UserDto(userRepository.findById(40L).get());
+        UserDto userDto = new UserDto(userRepository.findById(41L).get());
 
         return arrivalInfoApiResultList
                 .stream()
