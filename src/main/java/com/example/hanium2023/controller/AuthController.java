@@ -1,6 +1,7 @@
 package com.example.hanium2023.controller;
 
 import com.example.hanium2023.domain.dto.user.GoogleIdTokenDTO;
+import com.example.hanium2023.domain.dto.user.UserDto;
 import com.example.hanium2023.service.AuthService;
 import com.example.hanium2023.service.JwtTokenValidator;
 import com.example.hanium2023.service.VerificationException;
@@ -40,7 +41,27 @@ public class AuthController {
         }
     }
 
-    @GetMapping("/profile")
+    @PostMapping("/profile")
+    public ResponseEntity<String> updateUserProfile(
+            @RequestHeader("Authorization") String token,
+            @RequestBody UserDto userDto // 변경된 DTO 사용
+    ) {
+        try {
+            if (jwtTokenValidator.validateToken(token)) {
+                // JWT 토큰이 유효한 경우에는 userDto를 사용하여 프로필 정보를 업데이트합니다.
+                // authService.updateUserProfile(token, userDto) 또는 다른 서비스 메서드를 호출하여 업데이트할 수 있습니다.
+                authService.updateUserProfile(token, userDto);
+                // 예를 들어, 업데이트가 성공했을 때
+                return ResponseEntity.ok("프로필이 업데이트되었습니다.");
+            } else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal server error");
+        }
+    }
+
+    /*@GetMapping("/profile")
     public ResponseEntity<String> getUserProfile(@RequestHeader("Authorization") String token) {
         try {
             if (jwtTokenValidator.validateToken(token)) {
@@ -53,60 +74,5 @@ public class AuthController {
             // 예외 발생 시 에러 응답
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal server error");
         }
-    }
+    }*/
 }
-
-
-
-
-    /*private final JwtTokenValidator jwtTokenValidator;
-    private final AuthService authService;
-
-    @Autowired
-    public AuthController(JwtTokenValidator jwtTokenValidator, AuthService authService) {
-        this.jwtTokenValidator = jwtTokenValidator;
-        this.authService = authService;
-    }
-
-    @PostMapping("/signIn")
-    public ResponseEntity<String> login(@RequestBody GoogleIdTokenDTO dto) {
-        try {
-            String googleIdToken = dto.getGoogleIdToken();
-
-            // JWT 토큰 검증
-            if (jwtTokenValidator.validateToken(googleIdToken)) {
-                String jwtToken = authService.verifyGoogleIdToken(googleIdToken);
-                if (jwtToken != null) {
-                    // JWT 토큰을 응답 바디에 담아서 반환
-                    return ResponseEntity.ok(jwtToken);
-                }
-            }
-
-            // 토큰 검증 실패 또는 다른 오류 발생 시 에러 응답
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token verification failed");
-        } catch (GeneralSecurityException | IOException e) {
-            // 예외 발생 시 에러 응답
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal server error");
-        }
-    }*/
-
-    /*@Autowired
-    private AuthService authService;
-
-    @PostMapping("/signIn")
-    public ResponseEntity<String> login(@RequestBody GoogleIdTokenDTO dto) {
-        try {
-            String googleIdToken = dto.getGoogleIdToken();
-            String jwtToken = authService.verifyGoogleIdToken(googleIdToken);
-            if (jwtToken != null) {
-                // JWT 토큰을 응답 바디에 담아서 반환
-                return ResponseEntity.ok(jwtToken);
-            } else {
-                // 토큰 검증 실패 또는 다른 오류 발생 시 에러 응답
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token verification failed");
-            }
-        } catch (GeneralSecurityException | IOException e) {
-            // 예외 발생 시 에러 응답
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal server error");
-        }
-    }*/
