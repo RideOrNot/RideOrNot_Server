@@ -5,9 +5,8 @@ import com.example.hanium2023.domain.dto.publicapi.location.LocationInfoPushAlar
 import com.example.hanium2023.domain.dto.user.MovingSpeedInfo;
 import com.example.hanium2023.domain.dto.user.UserDto;
 import com.example.hanium2023.domain.entity.Station;
-import com.example.hanium2023.enums.DirectionCodeEnum;
-import com.example.hanium2023.enums.MovingMessageEnum;
 import com.example.hanium2023.enums.TrainStatusCodeEnum;
+import com.example.hanium2023.enums.MovingMessageEnum;
 import com.example.hanium2023.repository.StationRepository;
 import com.example.hanium2023.repository.UserRepository;
 import com.example.hanium2023.util.JsonUtil;
@@ -18,7 +17,9 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -35,103 +36,48 @@ public class LocationInfoService {
 
     public List<LocationInfoPushAlarm> getLocationInfoForPushAlarm(String stationName, String exitName) {
         List<Station> stationList = stationRepository.findAllByStatnName(stationName);
-        List<LocationInfoPushAlarm> locationInfoPushAlarmList = new ArrayList<>();
-
-        UserDto userDto = new UserDto(userRepository.findById(41L).get());
-
-        for (Station station : stationList) {
-            locationInfoPushAlarmList.addAll(getLocationInfoFromPublicApi(station.getLine().getLineName())
-                    .stream()
-                    .filter(result -> filterLocationInfo(result, station))
-                    .filter(result -> filterTerminus(result,station))
-                    .map(LocationInfoPushAlarm::new)
-                    .map(apiResult -> addDestinationInfo(apiResult, station))
-                    .filter(apiResult -> calculateArrivalTime(apiResult, station))
-                    .map(apiResult -> calculateMovingTime(apiResult, station, exitName, userDto))
-                    .collect(Collectors.toList()));
+        List<LocationInfoApiResult> locationInfoApiResultList = new ArrayList<>();
+        for (Station s : stationList) {
+            locationInfoApiResultList.addAll(getLocationInfoFromPublicApi(s.getLine().getLineName()));
         }
 
-        return locationInfoPushAlarmList;
+        UserDto userDto = new UserDto(userRepository.findById(40L).get());
+
+        return locationInfoApiResultList
+                .stream()
+                .filter(locationInfoApiResult -> locationInfoApiResult.getStationName().equals(stationName))
+                .filter(locationInfoApiResult -> locationInfoApiResult.getTrainStatusCode() == TrainStatusCodeEnum.DEPART_BEFORE_STATION.getCode())
+                .map(LocationInfoPushAlarm::new)
+                .map(this::calculateArrivalTime)
+                .map(apiResult -> calculateMovingTime(apiResult, stationName, exitName, userDto))
+                .collect(Collectors.toList());
     }
 
-    private boolean filterLocationInfo(LocationInfoApiResult apiResult, Station station) {
-        if (isAtCurrentStation(apiResult, station) && (apiResult.getTrainStatusCode() == TrainStatusCodeEnum.DEPART_BEFORE_STATION.getCode())) {
-            apiResult.setStationName(station.getStatnName());
-            return true;
-        }
-        if (isAtNearStation(apiResult, station) && apiResult.getTrainStatusCode() == TrainStatusCodeEnum.ARRIVE.getCode()) {
-            apiResult.setStationName(station.getStatnName());
-            apiResult.setTrainStatusCode(TrainStatusCodeEnum.ARRIVE_BEFORE_STATION.getCode());
-            return true;
-        }
-        if (isAtNearStation(apiResult, station) && apiResult.getTrainStatusCode() == TrainStatusCodeEnum.DEPART.getCode()) {
-            apiResult.setStationName(station.getStatnName());
-            apiResult.setTrainStatusCode(TrainStatusCodeEnum.DEPART_BEFORE_STATION.getCode());
-            return true;
-        }
-        return false;
-    }
+    private LocationInfoPushAlarm calculateArrivalTime(LocationInfoPushAlarm locationInfoPushAlarm) {
+        Station station = stationRepository.findByStatnNameAndLine_LineId(locationInfoPushAlarm.getStationName(), Integer.valueOf(locationInfoPushAlarm.getLineId()));
+        Integer adjacentStationTime = locationInfoPushAlarm.getDirection().equals("상행") ? station.getBeforeStationTime1() : station.getNextStationTime1();
 
-    private boolean filterTerminus(LocationInfoApiResult apiResult, Station station) {
-        return !station.getStatnName().startsWith(apiResult.getLastStationName());
-    }
-    private boolean isAtCurrentStation(LocationInfoApiResult apiResult, Station station) {
-        return validateStationName(station.getStatnName(), apiResult.getStationName());
-    }
-
-    private boolean isAtNearStation(LocationInfoApiResult apiResult, Station station) {
-        return (validateStationName(station.getNextStation1(), apiResult.getStationName()) && (apiResult.getDirectionCode() == DirectionCodeEnum.UP_LINE.getCode())) ||
-                (validateStationName(station.getBeforeStation1(), apiResult.getStationName()) && (apiResult.getDirectionCode() == DirectionCodeEnum.DOWN_LINE.getCode()));
-    }
-
-    private boolean validateStationName(String dbStationName, String apiStationName) {
-        if (dbStationName.equals(apiStationName)) {
-            return true;
-        } else if (apiStationName.startsWith(dbStationName + "(") && apiStationName.endsWith(")")) {
-            return true;
-        } else {
-            int indexOpen = apiStationName.indexOf("(");
-            int indexClose = apiStationName.indexOf(")");
-
-            if (indexOpen > 0 && indexClose > indexOpen) {
-                String prefix = apiStationName.substring(0, indexOpen);
-                String suffix = apiStationName.substring(indexClose + 1);
-                if (dbStationName.equals(prefix) && suffix.length() > 0) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    private LocationInfoPushAlarm addDestinationInfo(LocationInfoPushAlarm apiResult, Station station) {
-        String nextStation = (apiResult.getDirectionCode() == DirectionCodeEnum.UP_LINE.getCode()) ? station.getBeforeStation1() : station.getNextStation1();
-        String currentStation = apiResult.getDestination();
-        apiResult.setDestination(currentStation + "행 - " + nextStation + "방면");
-        return apiResult;
-    }
-
-    private boolean calculateArrivalTime(LocationInfoPushAlarm apiResult, Station station) {
-        Integer adjacentStationTime = (apiResult.getDirectionCode() == DirectionCodeEnum.UP_LINE.getCode()) ? station.getNextStationTime1() : station.getBeforeStationTime1();
         LocalDateTime currentTime = TimeUtil.getCurrentTime();
-        int arrivalTime = 0;
-        if (apiResult.getTrainStatus().equals(TrainStatusCodeEnum.DEPART_BEFORE_STATION.getStatus())) {
-            // api 딜레이 20초
-            LocalDateTime realDepartTime = TimeUtil.getTimeFromString(apiResult.getCreatedAt()).minusSeconds(20);
-            arrivalTime = (int) TimeUtil.getDuration(currentTime, realDepartTime.plusSeconds(adjacentStationTime)).getSeconds();
-        } else if (apiResult.getTrainStatus().equals(TrainStatusCodeEnum.ARRIVE_BEFORE_STATION.getStatus())) {
-            // api 딜레이 20초
-            LocalDateTime realDepartTime = TimeUtil.getTimeFromString(apiResult.getCreatedAt()).plusSeconds(25);
-            // 문 개방 시간 20초
-            arrivalTime = (int) TimeUtil.getDuration(currentTime, realDepartTime.plusSeconds(20).plusSeconds(adjacentStationTime)).getSeconds();
-        }
-        apiResult.setArrivalTime(arrivalTime);
-//        return apiResult;
-        return arrivalTime > 0;
+        LocalDateTime targetTime = TimeUtil.getTimeFromString(locationInfoPushAlarm.getCreatedAt());
+        int timeGap = (int) TimeUtil.getDuration(currentTime,targetTime.plusSeconds(adjacentStationTime)).getSeconds();
+        locationInfoPushAlarm.setArrivalTime(timeGap);
+        return locationInfoPushAlarm;
     }
 
-    private LocationInfoPushAlarm calculateMovingTime(LocationInfoPushAlarm locationInfoPushAlarm, Station station, String exitName, UserDto userDto) {
-        double distance = redisUtil.getDistanceByStationIdAndExitName(station.getStationId(), exitName);
+    public List<LocationInfoApiResult> getLocationInfoFromPublicApi(String lineName) {
+        JSONObject apiResultJsonObject = publicApiService.getApiResult(publicApiService.getLocationApiUrl(lineName));
+        Optional<JSONArray> jsonArray = Optional.ofNullable((JSONArray) apiResultJsonObject.get("realtimePositionList"));
+        List<LocationInfoApiResult> locationInfoApiResult = new ArrayList<>();
+
+        if (jsonArray.isPresent()) {
+            locationInfoApiResult = JsonUtil.convertJsonArrayToDtoList(jsonArray.get(), LocationInfoApiResult.class);
+        }
+        return locationInfoApiResult;
+    }
+
+    private LocationInfoPushAlarm calculateMovingTime(LocationInfoPushAlarm locationInfoPushAlarm, String stationName, String exitName, UserDto userDto) {
+        Integer stationId = redisUtil.getStationIdByStationNameAndLineId(stationName, Integer.valueOf(locationInfoPushAlarm.getLineId()));
+        double distance = redisUtil.getDistanceByStationIdAndExitName(stationId, exitName);
         double minMovingSpeed = distance / (double) locationInfoPushAlarm.getArrivalTime();
 
         MovingSpeedInfo movingSpeedInfo = getMovingSpeedInfo(userDto, minMovingSpeed);
@@ -149,18 +95,6 @@ public class LocationInfoService {
 
         return locationInfoPushAlarm;
     }
-
-    private List<LocationInfoApiResult> getLocationInfoFromPublicApi(String lineName) {
-        JSONObject apiResultJsonObject = publicApiService.getApiResult(publicApiService.getLocationApiUrl(lineName));
-        Optional<JSONArray> jsonArray = Optional.ofNullable((JSONArray) apiResultJsonObject.get("realtimePositionList"));
-        List<LocationInfoApiResult> locationInfoApiResult = new ArrayList<>();
-
-        if (jsonArray.isPresent()) {
-            locationInfoApiResult = JsonUtil.convertJsonArrayToDtoList(jsonArray.get(), LocationInfoApiResult.class);
-        }
-        return locationInfoApiResult;
-    }
-
 
     private MovingSpeedInfo getMovingSpeedInfo(UserDto userDto, double minMovingSpeed) {
         MovingMessageEnum[] movingMessageEnums = MovingMessageEnum.getMovingMessageEnums();

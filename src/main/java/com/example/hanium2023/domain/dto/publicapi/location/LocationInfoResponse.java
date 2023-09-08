@@ -35,7 +35,7 @@ public class LocationInfoResponse {
     private Integer isLastTrain;
 
     public LocationInfoResponse(LocationInfoApiResult locationInfoApiResult) {
-        this.direction = locationInfoApiResult.getDirectionCode();
+        this.direction = locationInfoApiResult.getDirection();
         this.lineName = locationInfoApiResult.getLineName();
         this.lineId = locationInfoApiResult.getLineId();
         this.createdAt = locationInfoApiResult.getCreatedAt();

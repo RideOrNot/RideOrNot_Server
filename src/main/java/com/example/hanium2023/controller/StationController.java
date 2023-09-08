@@ -18,8 +18,8 @@ public class StationController {
     private final StationService stationService;
 
     @GetMapping("/pushAlarm")
-    public Response<LocationInfoPushAlarmResponse> getRealTimeInfoForPushAlarm(@RequestParam String stationName, @RequestParam String exitName) {
-        return Response.success(stationService.getPushAlarmFromLocationInfo(stationName, exitName));
+    public Response<ArrivalInfoPushAlarmResponse> getRealTimeInfoForPushAlarm(@RequestParam String stationName, @RequestParam String exitName) {
+        return Response.success(stationService.getPushAlarmFromArrivalInfo(stationName, exitName));
     }
 
     @GetMapping("/{stationName}/{lineId}")

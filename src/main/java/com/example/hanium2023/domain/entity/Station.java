@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
@@ -44,12 +45,6 @@ public class Station {
 
     @OneToMany(mappedBy = "station", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private List<StationExit> stationExits  = new ArrayList<>();
-
-    @OneToMany(mappedBy = "station", cascade = CascadeType.REMOVE, orphanRemoval = true)
-    private List<ExitUserCountPerDay> exitUserCountPerDays  = new ArrayList<>();
-
-    @OneToMany(mappedBy = "station", cascade = CascadeType.REMOVE, orphanRemoval = true)
-    private List<ExitUserCountPerTime> exitUserCountPerTimes  = new ArrayList<>();
 
     public void updateSKStationCode(String code){
         this.SKStationCode = code;

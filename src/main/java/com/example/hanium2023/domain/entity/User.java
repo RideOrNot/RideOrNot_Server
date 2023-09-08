@@ -1,6 +1,6 @@
 package com.example.hanium2023.domain.entity;
 
-import com.example.hanium2023.util.encryption.converter.StringCryptoConverter;
+import com.example.hanium2023.util.converter.StringCryptoConverter;
 import lombok.*;
 
 import javax.persistence.*;

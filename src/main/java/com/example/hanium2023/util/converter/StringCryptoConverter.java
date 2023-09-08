@@ -1,6 +1,7 @@
-package com.example.hanium2023.util.encryption.converter;
+package com.example.hanium2023.util.converter;
 
-import com.example.hanium2023.util.encryption.EncryptionUtil;
+import com.example.hanium2023.util.EncryptionUtil;
+import org.springframework.beans.factory.annotation.Value;
 
 import javax.persistence.AttributeConverter;
 import javax.persistence.Convert;
