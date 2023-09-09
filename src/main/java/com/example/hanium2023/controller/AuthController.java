@@ -2,6 +2,7 @@ package com.example.hanium2023.controller;
 
 import com.example.hanium2023.domain.dto.user.GoogleIdTokenDTO;
 import com.example.hanium2023.domain.dto.user.UserDto;
+import com.example.hanium2023.domain.entity.User;
 import com.example.hanium2023.service.AuthService;
 import com.example.hanium2023.service.JwtTokenValidator;
 import com.example.hanium2023.service.VerificationException;
@@ -41,15 +42,36 @@ public class AuthController {
         }
     }
 
+
+    @GetMapping("/profile")
+    public ResponseEntity getUserProfile(@RequestHeader("Authorization") String token) {
+        try {
+            if (jwtTokenValidator.validateToken(token)) {
+                // 유효한 토큰인 경우, UserProfileDTO를 생성하여 반환합니다.
+
+                if (authService.getUserProfile(token) == 0) {
+                    return ResponseEntity.ok(null);
+                }
+                return ResponseEntity.ok("x");
+            } else {
+                // 토큰이 유효하지 않은 경우에는 UNAUTHORIZED 상태 코드를 반환합니다.
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("x");
+            }
+        } catch (Exception e) {
+            // 예외 발생 시 에러 응답
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("x");
+        }
+    }
+
+
     @PostMapping("/profile")
     public ResponseEntity<String> updateUserProfile(
             @RequestHeader("Authorization") String token,
-            @RequestBody UserDto userDto // 변경된 DTO 사용
+            @RequestBody UserDto userDto
     ) {
         try {
             if (jwtTokenValidator.validateToken(token)) {
                 // JWT 토큰이 유효한 경우에는 userDto를 사용하여 프로필 정보를 업데이트합니다.
-                // authService.updateUserProfile(token, userDto) 또는 다른 서비스 메서드를 호출하여 업데이트할 수 있습니다.
                 authService.updateUserProfile(token, userDto);
                 return ResponseEntity.ok("프로필이 업데이트되었습니다.");
             } else {

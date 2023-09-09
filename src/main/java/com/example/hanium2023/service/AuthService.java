@@ -45,6 +45,7 @@ public class AuthService {
             System.out.println(idToken);
 
             if (idToken != null) { //true){
+
                 // 검증된 토큰의 payload에서 이메일 정보를 추출
                 GoogleIdToken.Payload payload = idToken.getPayload(); //nullPointException
                 String email = payload.getEmail();
@@ -122,6 +123,31 @@ public class AuthService {
         } catch (Exception e) {
             // 예외 발생 시 실패
             return false;
+        }
+    }
+
+    public int getUserProfile(String token) {
+        try {
+            // 토큰에서 이메일 추출
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(secret)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+            String email = claims.get("email", String.class);
+            System.out.println("email : " + email);
+
+            // UserRepository를 사용하여 해당 이메일의 유저 정보 조회
+            User existingUser = userRepository.findByEmail(email);
+
+            if (existingUser != null) {
+                return existingUser.getAgeRange();
+            } else {
+                return 1;
+            }
+        } catch (Exception e) {
+            // 예외 발생 시 실패
+            return 1;
         }
     }
 }
