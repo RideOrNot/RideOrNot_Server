@@ -85,10 +85,10 @@ public class AuthService {
         }
     }
     public boolean updateUserProfile(String token, UserDto userDto) {
-        //String ageRangeString = userDto.getAgeRange();
-        //String genderString = userDto.getGender();
-        //int ageRange = Integer.parseInt(ageRangeString);
-        //int gender = Integer.parseInt(genderString);
+        String ageRangeString = userDto.getAgeRange();
+        String genderString = userDto.getGender();
+        int ageRange = Integer.parseInt(ageRangeString);
+        int gender = Integer.parseInt(genderString);
 
         try {
             // 토큰에서 이메일 추출
@@ -107,9 +107,9 @@ public class AuthService {
 
             if (existingUser != null) {
                 // 기존 유저 정보 업데이트
-                //existingUser.setAgeRange(ageRange);
-                //existingUser.setGender(gender);
-                //existingUser.setNickname(userDto.getNickname());
+                existingUser.setAgeRange(ageRange);
+                existingUser.setGender(gender);
+                existingUser.setNickname(userDto.getNickname());
 
                 // UserRepository를 사용하여 업데이트된 유저 정보 저장
                 userRepository.save(existingUser);
