@@ -18,6 +18,9 @@ public class UserDto {
     double runningSpeed;
     double InitialWalkingSpeed;
     double InitialRunningSpeed;
+    private String ageRange;
+    private String gender;
+    private String nickname;
 
     public UserDto(User user) {
         this.InitialRunningSpeed = user.getInitialRunningSpeed();
