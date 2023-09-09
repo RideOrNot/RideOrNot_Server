@@ -51,7 +51,6 @@ public class AuthController {
                 // JWT 토큰이 유효한 경우에는 userDto를 사용하여 프로필 정보를 업데이트합니다.
                 // authService.updateUserProfile(token, userDto) 또는 다른 서비스 메서드를 호출하여 업데이트할 수 있습니다.
                 authService.updateUserProfile(token, userDto);
-                // 예를 들어, 업데이트가 성공했을 때
                 return ResponseEntity.ok("프로필이 업데이트되었습니다.");
             } else {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
