@@ -42,13 +42,6 @@ public class StationService {
     private final LocationInfoService locationInfoService;
     private final CallHistoryRepository callHistoryRepository;
 
-
-    public ArrivalInfoPushAlarmResponse getPushAlarmFromArrivalInfo(String stationName, String exitName) {
-        ArrivalInfoPushAlarmResponse response = new ArrivalInfoPushAlarmResponse(arrivalInfoService.getRealTimeInfoForPushAlarm(stationName, exitName));
-        response.setCongestion(publicApiService.getCongestionForPushAlarm(stationName, exitName).getCongestionMessage());
-        return response;
-    }
-
     public LocationInfoPushAlarmResponse getPushAlarmFromLocationInfo(String stationName, String exitName) {
         List<LocationInfoPushAlarm> locationInfoForPushAlarm = locationInfoService.getLocationInfoForPushAlarm(stationName, exitName);
         for (LocationInfoPushAlarm l : locationInfoForPushAlarm) {
