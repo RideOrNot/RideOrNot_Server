@@ -37,6 +37,9 @@ public class ArrivalInfoApiResult {
     @JsonProperty("arvlMsg3")
     private String arrivalMessage3;
 
+    @JsonProperty("btrainNo")
+    private String trainNumber;
+
     @Override
     public String toString() {
         return "ArrivalInfoApiResult{" +
