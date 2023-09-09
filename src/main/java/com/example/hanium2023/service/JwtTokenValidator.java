@@ -24,8 +24,8 @@ public class JwtTokenValidator {
                     .parseClaimsJws(token)
                     .getBody();
 
-            //String email = claims.get("email", String.class);
-            //System.out.println("이메일 추출해보기 " + email);
+            String email = claims.get("email", String.class);
+            System.out.println("이메일 추출해보기 " + email);
             Date expirationDate = claims.getExpiration();
             Date now = new Date();
 
