@@ -24,7 +24,7 @@ public class ArrivalInfoPushAlarm {
         this.destination = apiResult.getDestination();
         this.stationName = apiResult.getStationName();
         this.arrivalMessage2 = apiResult.getArrivalMessage2();
-        this.arrivalMessage3 = apiResult.getArrivalMessage3();
+        this.arrivalMessage3 = apiResult.getCurrentStationName();
         this.createdAt = apiResult.getCreatedAt();
     }
 

@@ -6,6 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
@@ -30,12 +32,12 @@ public class ArrivalInfoApiResult {
     private String stationName;
 
     @JsonProperty("arvlCd")
-    private int arrivalCode;
+    private int trainStatusCode;
     @JsonProperty("arvlMsg2")
     private String arrivalMessage2;
 
     @JsonProperty("arvlMsg3")
-    private String arrivalMessage3;
+    private String currentStationName;
 
     @JsonProperty("btrainNo")
     private String trainNumber;
@@ -49,9 +51,10 @@ public class ArrivalInfoApiResult {
                 ", destination='" + destination + '\'' +
                 ", createdAt='" + createdAt + '\'' +
                 ", stationName='" + stationName + '\'' +
-                ", arrivalCode=" + arrivalCode +
+                ", trainStatusCode=" + trainStatusCode +
                 ", arrivalMessage2='" + arrivalMessage2 + '\'' +
-                ", arrivalMessage3='" + arrivalMessage3 + '\'' +
+                ", currentStationName='" + currentStationName + '\'' +
+                ", trainNumber='" + trainNumber + '\'' +
                 '}';
     }
 }

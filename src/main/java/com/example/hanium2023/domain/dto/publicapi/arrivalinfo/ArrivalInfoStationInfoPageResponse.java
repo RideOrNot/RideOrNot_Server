@@ -12,7 +12,7 @@ public class ArrivalInfoStationInfoPageResponse {
     String lineId;
     String destination;
     String arrivalMessage2;
-    String currentStationName;
+    String arrivalMessage3;
     String trainNumber;
     String trainStatus;
 
@@ -22,9 +22,9 @@ public class ArrivalInfoStationInfoPageResponse {
         this.lineId = apiResult.getLineId();
         this.destination = apiResult.getDestination();
         this.arrivalMessage2 = apiResult.getArrivalMessage2();
-        this.currentStationName = apiResult.getArrivalMessage3();
+        this.arrivalMessage3 = apiResult.getCurrentStationName();
         this.trainNumber = apiResult.getTrainNumber();
-        this.trainStatus = TrainStatusCodeEnum.getEnumByCode(apiResult.getArrivalCode()).getStatus();
+        this.trainStatus = TrainStatusCodeEnum.getEnumByCode(apiResult.getTrainStatusCode()).getStatus();
     }
 }
 

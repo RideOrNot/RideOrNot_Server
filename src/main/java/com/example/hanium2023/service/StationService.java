@@ -1,9 +1,10 @@
 package com.example.hanium2023.service;
 
 import com.example.hanium2023.domain.dto.congestion.CongestionResponse;
+import com.example.hanium2023.domain.dto.publicapi.arrivalinfo.ArrivalInfoApiResult;
+import com.example.hanium2023.domain.dto.publicapi.arrivalinfo.ArrivalInfoStationInfoPageResponse;
 import com.example.hanium2023.domain.dto.publicapi.location.LocationInfoPushAlarm;
 import com.example.hanium2023.domain.dto.station.ArrivalInfoResponse;
-import com.example.hanium2023.domain.dto.station.ArrivalInfoPushAlarmResponse;
 import com.example.hanium2023.domain.dto.station.LocationInfoPushAlarmResponse;
 import com.example.hanium2023.domain.dto.station.StationInfoPageResponse;
 import com.example.hanium2023.domain.entity.CallHistory;
@@ -27,6 +28,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -57,6 +59,7 @@ public class StationService {
                     .createdAt(l.getCreatedAt())
                     .loggedAt(TimeUtil.getCurrentTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd a hh:mm:ss", Locale.KOREAN)))
                     .build();
+            System.out.println("locationInfoForPushAlarm = " + l);
             callHistoryRepository.save(callHistory);
         }
         LocationInfoPushAlarmResponse response = new LocationInfoPushAlarmResponse(locationInfoForPushAlarm);
@@ -70,7 +73,12 @@ public class StationService {
     }
 
     public ArrivalInfoResponse getStationArrivalInfo(String stationName) {
-        return new ArrivalInfoResponse(arrivalInfoService.getArrivalInfo(stationName));
+        List<ArrivalInfoApiResult> arrivalInfo = arrivalInfoService.getArrivalInfo(stationName);
+        locationInfoService.correctArrivalInfoByLocationInfo(arrivalInfo, stationName);
+        return new ArrivalInfoResponse(arrivalInfo
+                .stream()
+                .map(ArrivalInfoStationInfoPageResponse::new)
+                .collect(Collectors.toList()));
     }
 
     public String insertDistances() {

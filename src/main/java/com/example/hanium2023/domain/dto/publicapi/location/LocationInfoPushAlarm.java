@@ -40,6 +40,7 @@ public class LocationInfoPushAlarm {
         this.destination = apiResult.getLastStationName();
         this.createdAt = apiResult.getCreatedAt();
         this.trainNumber = apiResult.getTrainNumber();
+        this.arrivalTime = apiResult.getArrivalTime();
     }
 
     @Override
