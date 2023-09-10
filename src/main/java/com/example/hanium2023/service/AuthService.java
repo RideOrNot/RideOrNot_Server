@@ -1,23 +1,27 @@
 package com.example.hanium2023.service;
 
-import com.example.hanium2023.domain.dto.user.UserDto;
+import com.example.hanium2023.domain.dto.user.UserProfileDto;
 import com.example.hanium2023.domain.entity.User;
+import com.example.hanium2023.exception.AppException;
+import com.example.hanium2023.exception.ErrorCode;
 import com.example.hanium2023.repository.UserRepository;
 import com.example.hanium2023.util.JwtTokenProvider;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
 
 @Service //클라이언트로부터 받은 구글 아이디 토큰을 검증하고 유저 정보를 확인 및 생성하는 비즈니스 로직
+@RequiredArgsConstructor
 public class AuthService {
 
     private final String CLIENT_ID = "900575659421-q7u2890lr94ik4o440mqmi1stj7sm6ik.apps.googleusercontent.com"; // 구글 클라이언트 ID
@@ -25,15 +29,8 @@ public class AuthService {
     private final JwtTokenProvider jwtTokenProvider; // JwtTokenProvider 추가
     @Value("${jwt.secret}")
     private String secret;
-    @Autowired
-    private JwtTokenValidator jwtTokenValidator; // JwtTokenValidator 주입
+    private final JwtTokenValidator jwtTokenValidator; // JwtTokenValidator 주입
 
-    @Autowired
-    public AuthService(UserRepository userRepository, JwtTokenProvider jwtTokenProvider) {
-        this.userRepository = userRepository;
-        this.jwtTokenProvider = jwtTokenProvider; // JwtTokenProvider 주입
-
-    }
 
     public String verifyGoogleIdToken(String googleIdToken) throws GeneralSecurityException, IOException {
         try {
@@ -85,11 +82,10 @@ public class AuthService {
             return null;
         }
     }
-    public boolean updateUserProfile(String token, UserDto userDto) {
-        String ageRangeString = userDto.getAgeRange();
-        String genderString = userDto.getGender();
-        int ageRange = Integer.parseInt(ageRangeString);
-        int gender = Integer.parseInt(genderString);
+    public boolean updateUserProfile(String token, UserProfileDto userProfileDto) {
+        int ageRange = userProfileDto.getAgeRange();
+        int gender = userProfileDto.getGender();
+        String nickname = userProfileDto.getNickName();
 
         try {
             // 토큰에서 이메일 추출
@@ -110,7 +106,7 @@ public class AuthService {
                 // 기존 유저 정보 업데이트
                 existingUser.setAgeRange(ageRange);
                 existingUser.setGender(gender);
-                existingUser.setNickname(userDto.getNickname());
+                existingUser.setNickname(nickname);
 
                 // UserRepository를 사용하여 업데이트된 유저 정보 저장
                 userRepository.save(existingUser);
@@ -126,8 +122,11 @@ public class AuthService {
         }
     }
 
-    public int getUserProfile(String token) {
+    public UserProfileDto getUserProfile(String token) {
         try {
+            if(!jwtTokenValidator.validateToken(token)){
+                throw new AppException(ErrorCode.INVALID_PERMISSION,ErrorCode.INVALID_PERMISSION.getMessage());
+            }
             // 토큰에서 이메일 추출
             Claims claims = Jwts.parserBuilder()
                     .setSigningKey(secret)
@@ -139,15 +138,12 @@ public class AuthService {
 
             // UserRepository를 사용하여 해당 이메일의 유저 정보 조회
             User existingUser = userRepository.findByEmail(email);
+            if(existingUser==null) return null;
+            return UserProfileDto.of(existingUser);
 
-            if (existingUser != null) {
-                return existingUser.getAgeRange();
-            } else {
-                return 1;
-            }
         } catch (Exception e) {
             // 예외 발생 시 실패
-            return 1;
+            return null;
         }
     }
 }

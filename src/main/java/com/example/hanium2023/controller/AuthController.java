@@ -1,12 +1,11 @@
 package com.example.hanium2023.controller;
 
+import com.example.hanium2023.domain.dto.ressponse.Response;
 import com.example.hanium2023.domain.dto.user.GoogleIdTokenDTO;
-import com.example.hanium2023.domain.dto.user.UserDto;
-import com.example.hanium2023.domain.entity.User;
+import com.example.hanium2023.domain.dto.user.UserProfileDto;
 import com.example.hanium2023.service.AuthService;
 import com.example.hanium2023.service.JwtTokenValidator;
-import com.example.hanium2023.service.VerificationException;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,15 +14,14 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 
 @RestController
+@RequiredArgsConstructor
+@RequestMapping("/auths")
 public class AuthController {
+    private final AuthService authService;
 
-    @Autowired
-    private AuthService authService;
+    private final JwtTokenValidator jwtTokenValidator; // JwtTokenValidator 주입
 
-    @Autowired
-    private JwtTokenValidator jwtTokenValidator; // JwtTokenValidator 주입
-
-    @PostMapping("/signIn")
+    @PostMapping("/sign-in")
     public ResponseEntity<String> login(@RequestBody GoogleIdTokenDTO dto) {
         try {
             String googleIdToken = dto.getGoogleIdToken();
@@ -44,35 +42,20 @@ public class AuthController {
 
 
     @GetMapping("/profile")
-    public ResponseEntity getUserProfile(@RequestHeader("Authorization") String token) {
-        try {
-            if (jwtTokenValidator.validateToken(token)) {
-                // 유효한 토큰인 경우, UserProfileDTO를 생성하여 반환합니다.
-
-                if (authService.getUserProfile(token) == 0) {
-                    return ResponseEntity.ok(null);
-                }
-                return ResponseEntity.ok("x");
-            } else {
-                // 토큰이 유효하지 않은 경우에는 UNAUTHORIZED 상태 코드를 반환합니다.
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("x");
-            }
-        } catch (Exception e) {
-            // 예외 발생 시 에러 응답
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("x");
-        }
+    public Response<UserProfileDto> getUserProfile(@RequestHeader("Authorization") String token) {
+        return Response.success(authService.getUserProfile(token));
     }
 
 
     @PostMapping("/profile")
     public ResponseEntity<String> updateUserProfile(
             @RequestHeader("Authorization") String token,
-            @RequestBody UserDto userDto
+            @RequestBody UserProfileDto userProfileDto
     ) {
         try {
             if (jwtTokenValidator.validateToken(token)) {
                 // JWT 토큰이 유효한 경우에는 userDto를 사용하여 프로필 정보를 업데이트합니다.
-                authService.updateUserProfile(token, userDto);
+                authService.updateUserProfile(token, userProfileDto);
                 return ResponseEntity.ok("프로필이 업데이트되었습니다.");
             } else {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
