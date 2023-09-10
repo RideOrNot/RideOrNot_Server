@@ -2,40 +2,37 @@ package com.example.hanium2023.service;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import javax.crypto.SecretKey;
 import java.util.Date;
 
 @Component
 public class JwtTokenValidator {
 
-    private final SecretKey secretKey;
-    private final long validityInMilliseconds;
-
-    public JwtTokenValidator(@Value("${jwt.secret}") String secret, @Value("${jwt.validity}") long validityInMilliseconds) {
-        this.secretKey = Keys.hmacShaKeyFor(secret.getBytes());
-        this.validityInMilliseconds = validityInMilliseconds;
-    }
+    @Value("${jwt.secret}")
+    private String secret;
 
     public boolean validateToken(String token) {
         try {
             System.out.println("token : " + token);
-            Claims claims = Jwts.parserBuilder() //Excaption 발생하는 듯
-                    .setSigningKey(secretKey)
+            //SecretKey secretKey = Keys.hmacShaKeyFor(secret.getBytes()); // X
+            // 토큰의 클레임(claims)을 파싱합니다.
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(secret)
                     .build()
                     .parseClaimsJws(token)
                     .getBody();
 
+            String email = claims.get("email", String.class);
+            System.out.println("이메일 추출해보기 " + email);
             Date expirationDate = claims.getExpiration();
             Date now = new Date();
 
+            System.out.println("JWT 토큰 검증 성공 true 반환");
             return expirationDate.after(now);
         } catch (Exception e) {
-            // JWT 토큰 검증 실패
+            System.out.println("JWT 토큰 검증 실패 false 반환"); //JWT 토큰 검증 실패
             return false;
         }
     }
