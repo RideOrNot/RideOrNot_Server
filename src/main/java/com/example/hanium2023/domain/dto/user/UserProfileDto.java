@@ -14,15 +14,18 @@ import javax.persistence.Convert;
 @NoArgsConstructor
 @Builder
 public class UserProfileDto {
+    Long id;
     Integer ageRange;
     Integer gender;
-    @Convert(converter = StringCryptoConverter.class)
     String nickName;
+    String email;
     public static UserProfileDto of(User user){
         return UserProfileDto.builder()
+                .id(user.getUserId())
                 .nickName(user.getNickname())
                 .gender(user.getGender())
                 .ageRange(user.getAgeRange())
+                .email(user.getEmail())
                 .build();
     }
 }
