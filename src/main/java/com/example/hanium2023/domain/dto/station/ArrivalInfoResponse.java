@@ -15,6 +15,11 @@ public class ArrivalInfoResponse {
 
     public ArrivalInfoResponse(List<ArrivalInfoStationInfoPageResponse> arrivalInfo) {
         this.arrivalInfo = arrivalInfo;
+<<<<<<< src/main/java/com/example/hanium2023/domain/dto/station/ArrivalInfoResponse.java
         this.currentTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd a HH:mm:ss").withLocale(Locale.forLanguageTag("ko")));
+=======
+        this.currentTime = TimeUtil.getCurrentTime();
+
+>>>>>>> src/main/java/com/example/hanium2023/domain/dto/station/ArrivalInfoResponse.java
     }
 }

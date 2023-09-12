@@ -1,5 +1,6 @@
 package com.example.hanium2023.controller;
 
+import com.example.hanium2023.domain.dto.publicapi.arrivalinfo.ArrivalInfoApiResult;
 import com.example.hanium2023.domain.dto.station.ArrivalInfoResponse;
 import com.example.hanium2023.domain.dto.station.ArrivalInfoPushAlarmResponse;
 import com.example.hanium2023.domain.dto.ressponse.Response;
@@ -10,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor

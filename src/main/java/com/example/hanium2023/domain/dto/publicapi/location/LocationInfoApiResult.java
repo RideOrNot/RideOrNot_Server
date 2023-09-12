@@ -44,10 +44,22 @@ public class LocationInfoApiResult {
     @JsonProperty("lstcarAt")
     private Integer isLastTrain;
 
+<<<<<<< src/main/java/com/example/hanium2023/domain/dto/publicapi/location/LocationInfoApiResult.java
     @Override
     public String toString() {
         return "LocationInfoApiResult{" +
                 "direction=" + direction +
+=======
+    @JsonProperty("trainNo")
+    private String trainNumber;
+
+    private int arrivalTime;
+
+    @Override
+    public String toString() {
+        return "LocationInfoApiResult{" +
+                "directionCode=" + directionCode +
+>>>>>>> src/main/java/com/example/hanium2023/domain/dto/publicapi/location/LocationInfoApiResult.java
                 ", lineName='" + lineName + '\'' +
                 ", lineId=" + lineId +
                 ", createdAt='" + createdAt + '\'' +
@@ -55,9 +67,11 @@ public class LocationInfoApiResult {
                 ", stationId=" + stationId +
                 ", lastStationName='" + lastStationName + '\'' +
                 ", lastStationId=" + lastStationId +
-                ", trainStatus=" + trainStatusCode +
+                ", trainStatusCode=" + trainStatusCode +
                 ", isExpress=" + isExpress +
                 ", isLastTrain=" + isLastTrain +
+                ", trainNumber='" + trainNumber + '\'' +
+                ", arrivalTime=" + arrivalTime +
                 '}';
     }
 }

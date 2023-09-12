@@ -24,6 +24,11 @@ public class LocationInfoPushAlarm {
         this.stationName = apiResult.getStationName();
         this.destination = apiResult.getLastStationName();
         this.createdAt = apiResult.getCreatedAt();
+<<<<<<< src/main/java/com/example/hanium2023/domain/dto/publicapi/location/LocationInfoPushAlarm.java
+=======
+        this.trainNumber = apiResult.getTrainNumber();
+        this.arrivalTime = apiResult.getArrivalTime();
+>>>>>>> src/main/java/com/example/hanium2023/domain/dto/publicapi/location/LocationInfoPushAlarm.java
     }
 
     @Override
