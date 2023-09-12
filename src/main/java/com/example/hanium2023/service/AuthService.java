@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
+import java.util.Optional;
 
 @Service //클라이언트로부터 받은 구글 아이디 토큰을 검증하고 유저 정보를 확인 및 생성하는 비즈니스 로직
 @RequiredArgsConstructor
@@ -144,6 +145,23 @@ public class AuthService {
         } catch (Exception e) {
             // 예외 발생 시 실패
             return null;
+        }
+    }
+    public boolean deleteUser(Long userId) {
+        try {
+            // userId를 사용하여 유저 정보를 조회합니다.
+            Optional<User> userOptional = userRepository.findById(userId);
+
+            if (userOptional.isPresent()) {
+                // 유저 정보가 존재하면 삭제합니다.
+                userRepository.deleteById(userId);
+                return true; // 회원 탈퇴 성공
+            } else {
+                return false; // 유저 정보가 없어서 실패
+            }
+        } catch (Exception e) {
+            // 예외 발생 시 실패
+            return false;
         }
     }
 }

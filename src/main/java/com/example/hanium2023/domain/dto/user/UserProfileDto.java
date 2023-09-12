@@ -18,11 +18,13 @@ public class UserProfileDto {
     Integer gender;
     @Convert(converter = StringCryptoConverter.class)
     String nickName;
+    String email;
     public static UserProfileDto of(User user){
         return UserProfileDto.builder()
                 .nickName(user.getNickname())
                 .gender(user.getGender())
                 .ageRange(user.getAgeRange())
+                .email(user.getEmail())
                 .build();
     }
 }
