@@ -18,7 +18,6 @@ public class ArrivalInfoResponse {
 
     public ArrivalInfoResponse(List<ArrivalInfoStationInfoPageResponse> arrivalInfo) {
         this.arrivalInfo = arrivalInfo;
-//        this.currentTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd a HH:mm:ss").withLocale(Locale.forLanguageTag("ko")));
         this.currentTime = TimeUtil.getCurrentTime();
 
     }

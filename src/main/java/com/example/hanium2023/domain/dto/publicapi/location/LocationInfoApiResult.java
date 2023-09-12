@@ -47,10 +47,12 @@ public class LocationInfoApiResult {
     @JsonProperty("trainNo")
     private String trainNumber;
 
+    private int arrivalTime;
+
     @Override
     public String toString() {
         return "LocationInfoApiResult{" +
-                "direction=" + directionCode +
+                "directionCode=" + directionCode +
                 ", lineName='" + lineName + '\'' +
                 ", lineId=" + lineId +
                 ", createdAt='" + createdAt + '\'' +
@@ -58,9 +60,11 @@ public class LocationInfoApiResult {
                 ", stationId=" + stationId +
                 ", lastStationName='" + lastStationName + '\'' +
                 ", lastStationId=" + lastStationId +
-                ", trainStatus=" + trainStatusCode +
+                ", trainStatusCode=" + trainStatusCode +
                 ", isExpress=" + isExpress +
                 ", isLastTrain=" + isLastTrain +
+                ", trainNumber='" + trainNumber + '\'' +
+                ", arrivalTime=" + arrivalTime +
                 '}';
     }
 }
