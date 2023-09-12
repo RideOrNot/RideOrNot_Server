@@ -65,6 +65,28 @@ public class AuthController {
         }
     }
 
+    @DeleteMapping("/profile/{userId}")
+    public ResponseEntity<String> deleteUser(@PathVariable Long userId, @RequestHeader("Authorization") String token) {
+        try {
+            // 회원 탈퇴 로직 호출 jwt 유효할 때 탈퇴되도록 로직 수정해야함
+            if (jwtTokenValidator.validateToken(token)) {
+                boolean deleted = authService.deleteUser(userId);
+                if (deleted) {
+                    // 회원 탈퇴 성공
+                    return ResponseEntity.noContent().build();
+                } else {
+                    // 회원 탈퇴 실패 시 에러 응답
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to delete user");
+                }
+            }else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+            }
+        } catch (Exception e) {
+            // 예외 발생 시 에러 응답
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal server error");
+        }
+    }
+
     /*@GetMapping("/profile")
     public ResponseEntity<String> getUserProfile(@RequestHeader("Authorization") String token) {
         try {
