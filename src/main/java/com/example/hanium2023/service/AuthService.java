@@ -28,9 +28,9 @@ public class AuthService {
     private final String CLIENT_ID = "900575659421-q7u2890lr94ik4o440mqmi1stj7sm6ik.apps.googleusercontent.com"; // 구글 클라이언트 ID
     private final UserRepository userRepository;
     private final JwtTokenProvider jwtTokenProvider; // JwtTokenProvider 추가
+    private final JwtTokenValidator jwtTokenValidator; // JwtTokenValidator 주입
     @Value("${jwt.secret}")
     private String secret;
-    private final JwtTokenValidator jwtTokenValidator; // JwtTokenValidator 주입
 
 
     public String verifyGoogleIdToken(String googleIdToken) throws GeneralSecurityException, IOException {
@@ -149,7 +149,7 @@ public class AuthService {
     }
     public boolean deleteUser(Long userId) {
         try {
-            // userId를 사용하여 유저 정보를 조회합니다.
+            // userId를 사용하여 유저 정보를 조회
             Optional<User> userOptional = userRepository.findById(userId);
 
             if (userOptional.isPresent()) {

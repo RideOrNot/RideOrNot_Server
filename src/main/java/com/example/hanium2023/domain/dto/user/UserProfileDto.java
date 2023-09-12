@@ -19,12 +19,14 @@ public class UserProfileDto {
     @Convert(converter = StringCryptoConverter.class)
     String nickName;
     String email;
+    Long userId;
     public static UserProfileDto of(User user){
         return UserProfileDto.builder()
                 .nickName(user.getNickname())
                 .gender(user.getGender())
                 .ageRange(user.getAgeRange())
                 .email(user.getEmail())
+                .userId(user.getUserId())
                 .build();
     }
 }

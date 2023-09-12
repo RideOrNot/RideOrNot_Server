@@ -73,7 +73,7 @@ public class AuthController {
 
             if (deleted) {
                 // 회원 탈퇴 성공
-                return ResponseEntity.noContent().build(); // 204 No Content
+                return ResponseEntity.noContent().build();
             } else {
                 // 회원 탈퇴 실패 시 에러 응답
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to delete user");
