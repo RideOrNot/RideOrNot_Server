@@ -67,8 +67,11 @@ public class LocationInfoService {
         for (Station station : stationList) {
             locationInfoPushAlarmList.addAll(getLocationInfoFromPublicApi(station.getLine().getLineName())
                     .stream()
-                    .filter(result -> isAtNearOrCurrentStation(result, station))
                     .filter(result -> filterTerminus(result, station))
+                    .filter(result -> isAtNearOrCurrentStation(result, station))
+                    .filter(result -> filterLine6Circular(result, station))
+                    .filter(result -> filterLine5(result, station))
+                    .filter(result -> filterLine2(result, station))
                     .filter(apiResult -> calculateNearStationArrivalTime(apiResult, station))
                     .map(LocationInfoPushAlarm::new)
                     .map(apiResult -> addDestinationInfo(apiResult, station))
@@ -104,8 +107,46 @@ public class LocationInfoService {
     }
 
     private boolean filterTerminus(LocationInfoApiResult apiResult, Station station) {
-        return !station.getStatnName().startsWith(apiResult.getLastStationName());
+        return !apiResult.getStationName().equals(apiResult.getLastStationName()) && !station.getStatnName().equals(apiResult.getLastStationName());
     }
+
+    private boolean filterLine6Circular(LocationInfoApiResult apiResult, Station station) {
+        if (station.getStatnName().equals("역촌")) {
+            if (apiResult.getTrainStatusCode() > 2) {
+                return apiResult.getLastStationName().equals("응암순환(상선)");
+            }
+        }
+        return true;
+    }
+
+    private boolean filterLine5(LocationInfoApiResult apiResult, Station station) {
+        if (station.getStatnName().equals("둔촌동")) {
+            if (apiResult.getTrainStatusCode() > 2) {
+                return apiResult.getLastStationName().equals("마천");
+            }
+        }
+        if (station.getStatnName().equals("길동")) {
+            if (apiResult.getTrainStatusCode() > 2) {
+                return !apiResult.getLastStationName().equals("마천");
+            }
+        }
+        return true;
+    }
+
+    private boolean filterLine2(LocationInfoApiResult apiResult, Station station) {
+        if (station.getStatnName().equals("도림천")) {
+            if (apiResult.getTrainStatusCode() > 2) {
+                return apiResult.getLastStationName().endsWith("지선");
+            }
+        }
+        if (station.getStatnName().equals("용답")) {
+            if (apiResult.getTrainStatusCode() > 2) {
+                return apiResult.getLastStationName().endsWith("지선");
+            }
+        }
+        return true;
+    }
+
 
     private boolean isAtCurrentStation(LocationInfoApiResult apiResult, Station station) {
         return validateStationName(station.getStatnName(), apiResult.getStationName());
@@ -138,6 +179,8 @@ public class LocationInfoService {
 
     private LocationInfoPushAlarm addDestinationInfo(LocationInfoPushAlarm apiResult, Station station) {
         String nextStation = (apiResult.getDirectionCode() == DirectionCodeEnum.UP_LINE.getCode()) ? station.getBeforeStation1() : station.getNextStation1();
+        if(station.getLine().getLineId()==1002)
+            nextStation = (apiResult.getDirectionCode() == DirectionCodeEnum.DOWN_LINE.getCode()) ? station.getBeforeStation1() : station.getNextStation1();
         String currentStation = apiResult.getDestination();
         apiResult.setDestination(currentStation + "행 - " + nextStation + "방면");
         return apiResult;
