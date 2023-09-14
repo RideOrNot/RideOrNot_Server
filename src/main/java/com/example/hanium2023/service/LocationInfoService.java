@@ -67,6 +67,7 @@ public class LocationInfoService {
         for (Station station : stationList) {
             locationInfoPushAlarmList.addAll(getLocationInfoFromPublicApi(station.getLine().getLineName())
                     .stream()
+                    .filter(result -> filterTerminus(result, station))
                     .filter(result -> isAtNearOrCurrentStation(result, station))
                     .filter(result -> filterTerminus(result, station))
                     .filter(apiResult -> calculateNearStationArrivalTime(apiResult, station))
@@ -104,7 +105,16 @@ public class LocationInfoService {
     }
 
     private boolean filterTerminus(LocationInfoApiResult apiResult, Station station) {
-        return !station.getStatnName().startsWith(apiResult.getLastStationName());
+        return !apiResult.getStationName().equals(apiResult.getLastStationName()) && !station.getStatnName().equals(apiResult.getLastStationName());
+    }
+
+    private boolean filterLine6Circular(LocationInfoApiResult apiResult, Station station) {
+        if (station.getStatnName().equals("역촌")) {
+            if (apiResult.getTrainStatusCode() > 2) {
+                return apiResult.getLastStationName().equals("응암순환(상선)");
+            }
+        }
+        return true;
     }
 
     private boolean isAtCurrentStation(LocationInfoApiResult apiResult, Station station) {
