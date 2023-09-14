@@ -179,6 +179,8 @@ public class LocationInfoService {
 
     private LocationInfoPushAlarm addDestinationInfo(LocationInfoPushAlarm apiResult, Station station) {
         String nextStation = (apiResult.getDirectionCode() == DirectionCodeEnum.UP_LINE.getCode()) ? station.getBeforeStation1() : station.getNextStation1();
+        if(station.getLine().getLineId()==1002)
+            nextStation = (apiResult.getDirectionCode() == DirectionCodeEnum.DOWN_LINE.getCode()) ? station.getBeforeStation1() : station.getNextStation1();
         String currentStation = apiResult.getDestination();
         apiResult.setDestination(currentStation + "행 - " + nextStation + "방면");
         return apiResult;
