@@ -46,22 +46,23 @@ public class StationService {
 
     public LocationInfoPushAlarmResponse getPushAlarmFromLocationInfo(String stationName, String exitName) {
         List<LocationInfoPushAlarm> locationInfoForPushAlarm = locationInfoService.getLocationInfoForPushAlarm(stationName, exitName);
-        for (LocationInfoPushAlarm l : locationInfoForPushAlarm) {
-            CallHistory callHistory = CallHistory.builder()
-                    .arrivalTime(l.getArrivalTime())
-                    .movingTime(l.getMovingTime())
-                    .direction(l.getDirection())
-                    .lineId(l.getLineId())
-                    .destination(l.getDestination())
-                    .message(l.getMessage())
-                    .stationName(l.getStationName())
-                    .trainStatus(l.getTrainStatus())
-                    .createdAt(l.getCreatedAt())
-                    .loggedAt(TimeUtil.getCurrentTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd a hh:mm:ss", Locale.KOREAN)))
-                    .build();
-            System.out.println("locationInfoForPushAlarm = " + l);
-            callHistoryRepository.save(callHistory);
-        }
+//        for (LocationInfoPushAlarm l : locationInfoForPushAlarm) {
+//            CallHistory callHistory = CallHistory.builder()
+//                    .arrivalTime(l.getArrivalTime())
+//                    .movingTime(l.getMovingTime())
+//                    .direction(l.getDirection())
+//                    .lineId(l.getLineId())
+//                    .destination(l.getDestination())
+//                    .message(l.getMessage())
+//                    .stationName(l.getStationName())
+//                    .trainStatus(l.getTrainStatus())
+//                    .createdAt(l.getCreatedAt())
+//                    .trainNumber(l.getTrainNumber())
+//                    .loggedAt(TimeUtil.getCurrentTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd a hh:mm:ss", Locale.KOREAN)))
+//                    .build();
+//            System.out.println("locationInfoForPushAlarm = " + l);
+//            callHistoryRepository.save(callHistory);
+//        }
         LocationInfoPushAlarmResponse response = new LocationInfoPushAlarmResponse(locationInfoForPushAlarm);
         response.setCongestion(publicApiService.getCongestionForPushAlarm(stationName, exitName).getCongestionMessage());
         return response;

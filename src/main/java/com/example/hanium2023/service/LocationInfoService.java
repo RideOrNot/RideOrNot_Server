@@ -225,7 +225,7 @@ public class LocationInfoService {
         return locationInfoPushAlarm;
     }
 
-    private List<LocationInfoApiResult> getLocationInfoFromPublicApi(String lineName) {
+    public List<LocationInfoApiResult> getLocationInfoFromPublicApi(String lineName) {
         JSONObject apiResultJsonObject = publicApiService.getApiResult(publicApiService.getLocationApiUrl(lineName));
         Optional<JSONArray> jsonArray = Optional.ofNullable((JSONArray) apiResultJsonObject.get("realtimePositionList"));
         List<LocationInfoApiResult> locationInfoApiResult = new ArrayList<>();

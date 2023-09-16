@@ -9,7 +9,6 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -31,6 +30,6 @@ public class CallHistory {
     private String stationName;
     private String trainStatus;
     private String createdAt;
-    private int trainNumber;
+    private String trainNumber;
     private String loggedAt;
 }
