@@ -28,7 +28,28 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
 	implementation group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1.1'
-
+	implementation group: 'org.locationtech.proj4j', name: 'proj4j', version: '1.0.0'
+	implementation 'org.osgeo:proj4j:0.1.0'
+	implementation group: 'com.squareup.okhttp', name: 'okhttp', version: '2.7.5'
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+	implementation 'io.springfox:springfox-boot-starter:3.0.0'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'com.google.api-client:google-api-client:1.32.1'
+	implementation 'com.google.api-client:google-api-client:1.32.1' // 예시 버전
+	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+	implementation 'org.springframework.boot:spring-boot-starter-mustache'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-devtools'
+	annotationProcessor 'org.projectlombok:lombok'
+	testImplementation 'org.mockito:mockito-core:3.9.0'
+	testImplementation 'org.springframework.security:spring-security-test'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	// jjwt (Java JWT) 라이브러리
+	implementation 'io.jsonwebtoken:jjwt-api:0.11.2'
+	implementation 'io.jsonwebtoken:jjwt-impl:0.11.2'
+	implementation 'io.jsonwebtoken:jjwt-jackson:0.11.2'
 }
 //
 //tasks.named('test') {

@@ -1,15 +1,36 @@
 public-api-key:
   real-time-key: ${REAL_TIME_KEY}
+  lat-lon-key: ${LAT_LON_KEY}
 
 server:
   port: 8080
 
 spring:
+  database:
+      encrypt:
+        key: ${DB_ENCRYPT_KEY}
+  security:
+    oauth2:
+      client:
+        registration:
+          google: # /oauth2/authorization/google 이 주소를 동작하게 한다.
+            client-id: 342718976152-cqk9qo90dbulb3js9m114cfbuss02ii1.apps.googleusercontent.com #900575659421-p64cmjec2kee4hld0i9ekri5g581ufip.apps.googleusercontent.com
+            client-secret: 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 #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
+            scope:
+              - email
+              - profile
+  redis:
+    host: ${REDIS_HOST}
+    port: ${REDIS_PORT}
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://${DB_ENDPOINT}:3306/hanium2023
+    url: ${DB_ENDPOINT}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
+
 
   jpa:
     hibernate:
@@ -27,3 +48,6 @@ logging:
         type:
           descriptor:
             sql: trace
+jwt:
+  secret: 0123456789012345678901234567890123456789012
+  validity: 60
